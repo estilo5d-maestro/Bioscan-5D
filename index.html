@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BioScan 5D · Modo Umbral</title>
+
+  <link rel="stylesheet" href="/css/bioscan.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+  <div id="scanner-wrapper-master">
+    <div class="sonar-bg"></div>
+
+    <div class="iphone-frame">
+      <div class="dynamic-island"></div>
+      <div class="screen-gloss"></div>
+
+      <div class="app-content" x-data="bioscanApp()" x-init="init()" x-cloak>
+
+        <div class="orb-container">
+          <div class="frequency-core">
+            <div class="energy-frequency freq1"></div>
+            <div class="energy-frequency freq2"></div>
+            <div class="energy-frequency freq3"></div>
+          </div>
+          <svg class="progress-ring" width="120" height="120">
+            <circle class="progress-ring__circle" r="52" cx="60" cy="60"></circle>
+            <circle class="progress-ring__fill" r="52" cx="60" cy="60"
+                    :stroke-dashoffset="estado === 'cuestionario' ? 326 - (326 * progreso / 100) : 326"></circle>
+          </svg>
+        </div>
+
+        <template x-if="estado === 'bienvenida'">
+          <div class="step-card">
+            <span class="subtitle-top">BIOSCAN 5D · MODO UMBRAL</span>
+            <h1 class="main-title">Tu cuerpo lleva años hablándote</h1>
+            <p>En 4 minutos vas a descubrir tu Modo Postural actual y hacia dónde necesitas migrar para enfrentar los retos que tienes por delante. No es un test de personalidad. Es un espejo somático.</p>
+            <button class="btn-cta" @click="irARegistro()">Comenzar mi BioScan</button>
+            <div class="tech-signature">AMY CUDDY · ERIK PEPER · BEHAVIORAL DESIGN</div>
+          </div>
+        </template>
+
+        <template x-if="estado === 'registro'">
+          <div class="step-card">
+            <span class="subtitle-top">PASO 1 DE 2</span>
+            <h1 class="main-title">Tu perfil viaja contigo</h1>
+            <p>Tu correo es la llave única de tu BioScan. Ahí recibirás tu diagnóstico completo.</p>
+
+            <div class="vip-form-container">
+              <template x-if="error">
+                <div class="error-msg" x-text="error"></div>
+              </template>
+
+              <input type="text" class="vip-input" placeholder="¿Cómo te llamamos?"
+                     x-model="usuario.nombre" :disabled="cargando">
+              <input type="email" class="vip-input" placeholder="tu@correo.com"
+                     x-model="usuario.email" :disabled="cargando">
+
+              <div class="consent-row">
+                <input type="checkbox" id="consent" x-model="usuario.consentimiento">
+                <label for="consent">Acepto recibir mi diagnóstico y las novedades del Umbral 5D #01.</label>
+              </div>
+
+              <button class="btn-cta" @click="enviarRegistro()" :disabled="cargando">
+                <span x-show="!cargando">Activar mi BioScan</span>
+                <span x-show="cargando"><div class="spinner"></div></span>
+              </button>
+            </div>
+            <div class="acceso-nota">🔒 No compartimos tus datos con terceros.</div>
+          </div>
+        </template>
+
+        <template x-if="estado === 'preparacion'">
+          <div class="step-card">
+            <span class="subtitle-top">ANTES DE EMPEZAR</span>
+            <h1 class="main-title">Una sola cosa</h1>
+            <p>Responde con tu cuerpo, no con tu mente. La primera respuesta que llegue es la correcta. No hay opciones malas, solo información valiosa sobre ti.</p>
+            <p style="color: var(--brand-gold);">Toma una respiración profunda. Cuando exhales, comienza.</p>
+            <button class="btn-cta" @click="empezarCuestionario()">Estoy listo</button>
+          </div>
+        </template>
+
+        <template x-if="estado === 'cuestionario'">
+          <div class="step-card" style="position: relative;">
+
+            <template x-if="mostrarTransicion">
+              <div class="transicion-bloque">
+                <p x-text="textoTransicion"></p>
+              </div>
+            </template>
+
+            <div class="q-bloque" x-text="preguntaActual.bloque"></div>
+            <div class="q-counter">
+              Pregunta <span x-text="indiceActual + 1"></span> de <span x-text="totalPreguntas"></span>
+            </div>
+            <div class="q-texto" x-text="preguntaActual.texto"></div>
+
+            <template x-if="preguntaActual.tipo === 'multi'">
+              <div class="multi-hint">
+                Seleccionadas: <span x-text="retosSeleccionados.length"></span> de <span x-text="preguntaActual.maxSelecciones"></span>
+              </div>
+            </template>
+
+            <div class="q-opciones">
+              <template x-for="(opcion, idx) in preguntaActual.opciones" :key="idx">
+                <div class="q-opcion"
+                     :class="{ 'selected': estaSeleccionada(idx) }"
+                     @click="seleccionar(idx)"
+                     x-text="opcion.txt"></div>
+              </template>
+            </div>
+
+            <div class="q-nav">
+              <button class="btn-ghost" @click="anterior()" x-show="indiceActual > 0">Anterior</button>
+              <button class="btn-cta" @click="siguiente()" :disabled="!puedeAvanzar">
+                <span x-text="esUltimaPregunta ? 'Ver mi Modo Postural' : 'Siguiente'"></span>
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <template x-if="estado === 'calculo'">
+          <div class="step-card">
+            <h1 class="calculo-titulo">Analizando tu cuerpo...</h1>
+            <div class="calculo-texto" x-text="textoCalculo"></div>
+          </div>
+        </template>
+
+        <template x-if="estado === 'resultado' && resultado">
+          <div class="step-card" x-init="$nextTick(() => dibujarRadar())">
+
+            <div class="resultado-label">TU MODO POSTURAL ACTUAL</div>
+            <div class="perfil-nombre" x-text="perfilActualData.nombre"></div>
+            <div class="perfil-subtitulo" x-text="perfilActualData.subtitulo"></div>
+
+            <div class="divisor"></div>
+
+            <div class="bloque-perfil">
+              <div class="titulo">🎯 PATRÓN CARACTERÍSTICO</div>
+              <div class="texto" x-text="perfilActualData.patron"></div>
+            </div>
+            <div class="bloque-perfil">
+              <div class="titulo">👤 QUIÉN ERES</div>
+              <div class="texto" x-text="perfilActualData.quien_eres"></div>
+            </div>
+            <div class="bloque-perfil">
+              <div class="titulo">🔍 LO QUE TU CUERPO ESTÁ DICIENDO</div>
+              <div class="texto" x-text="perfilActualData.cuerpo_dice"></div>
+            </div>
+            <div class="bloque-perfil">
+              <div class="titulo">💎 TU FORTALEZA OCULTA</div>
+              <div class="texto" x-text="perfilActualData.fortaleza"></div>
+            </div>
+
+            <div class="resultado-label" style="margin-top:20px;">TU HUELLA POSTURAL · DÍA 0</div>
+            <div class="radar-container">
+              <canvas id="radarChart"></canvas>
+            </div>
+
+            <div class="destino-card">
+              <div class="resultado-label">TU PRÓXIMO UMBRAL</div>
+              <div class="perfil-nombre" style="font-size:24px;" x-text="perfilDestinoData.nombre"></div>
+              <div class="perfil-subtitulo" style="margin-bottom:14px;" x-text="perfilDestinoData.subtitulo"></div>
+              <div class="bloque-perfil">
+                <div class="titulo">🚪 HACIA DÓNDE VAS</div>
+                <div class="texto" x-text="'Tu plan de 7 días ' + perfilDestinoData.proximo_umbral"></div>
+              </div>
+            </div>
+
+            <div class="cta-final">
+              <p style="color:#fff; font-size:15px; line-height:1.5;">
+                Conocer tu perfil es apenas el primer umbral. El <strong>4 de junio</strong>, en Umbral 5D #01, vas a entender por qué tu cuerpo se comporta así y a vivir la experiencia que transforma ese conocimiento en poder real.
+              </p>
+              <button class="btn-cta" @click="irAlUmbral()">Reservar mi lugar en el Umbral</button>
+              <button class="btn-ghost" @click="descargarPDF()">Descargar mi diagnóstico (PDF)</button>
+              <div class="acceso-nota">
+                Acceso abierto · 4 de junio · 6:00 PM Colombia · Online en vivo<br>
+                En los próximos minutos recibirás tu diagnóstico completo en tu correo.
+              </div>
+            </div>
+
+          </div>
+        </template>
+
+      </div>
+      </div>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/data.js"></script>
+  <script src="/js/supabase-client.js"></script>
+  <script src="/js/pdf-generator.js"></script>
+  <script src="/js/bioscan-app.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</body>
+</html>

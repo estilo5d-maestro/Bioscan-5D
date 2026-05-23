@@ -1,0 +1,28 @@
+# ============================================================
+# BIOSCAN 5D · MODO UMBRAL
+# netlify.toml — Configuracion de despliegue
+# ============================================================
+
+[build]
+  # No usamos build step (sitio estatico). Publicamos la raiz.
+  publish = "."
+  functions = "netlify/functions"
+
+# Redireccion para que las funciones sean accesibles
+[[redirects]]
+  from = "/api/calcular-perfil"
+  to = "/.netlify/functions/calcular-perfil"
+  status = 200
+
+[[redirects]]
+  from = "/api/enviar-rdstation"
+  to = "/.netlify/functions/enviar-rdstation"
+  status = 200
+
+# Headers de seguridad basicos
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
