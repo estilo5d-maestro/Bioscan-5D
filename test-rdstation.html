@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Conversiones RD Station</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+    pre { background: #f4f4f4; padding: 15px; margin-top: 20px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Test de Identificadores BioScan</h1>
+  <button onclick="enviarTodas()">Disparar 9 conversiones de prueba</button>
+  <pre id="resultado">Esperando acción...</pre>
+
+  <script>
+    const TOKEN = "2c053cae85715de880a9fd77f07d6a1a";
+    
+    const identificadores = [
+      { id: "bioscan-5d-registro-inicial", email: "carlos+test1@5d.com.co", name: "Test Registro" },
+      { id: "bioscan-5d-completado-magnetico", email: "carlos+test2@5d.com.co", name: "Test Magnetico" },
+      { id: "bioscan-5d-completado-eje", email: "carlos+test3@5d.com.co", name: "Test Eje" },
+      { id: "bioscan-5d-completado-puente", email: "carlos+test4@5d.com.co", name: "Test Puente" },
+      { id: "bioscan-5d-completado-inalterable", email: "carlos+test5@5d.com.co", name: "Test Inalterable" },
+      { id: "bioscan-5d-completado-magnetico-plus", email: "carlos+test6@5d.com.co", name: "Test Magnetico Plus" },
+      { id: "bioscan-5d-completado-eje-plus", email: "carlos+test7@5d.com.co", name: "Test Eje Plus" },
+      { id: "bioscan-5d-completado-puente-plus", email: "carlos+test8@5d.com.co", name: "Test Puente Plus" },
+      { id: "bioscan-5d-completado-inalterable-plus", email: "carlos+test9@5d.com.co", name: "Test Inalterable Plus" }
+    ];
+
+    async function enviarTodas() {
+      const log = [];
+      document.getElementById("resultado").textContent = "Enviando conversiones, por favor espera...";
+      
+      for (const item of identificadores) {
+        try {
+          const res = await fetch("https://www.rdstation.com.br/api/1.3/conversions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              token_rdstation: TOKEN,
+              identificador: item.id,
+              email: item.email,
+              name: item.name
+            })
+          });
+          // Status 200 significa que fue exitoso
+          log.push(`✅ ${item.id}: Status ${res.status}`);
+        } catch (error) {
+          log.push(`❌ ${item.id}: Error - ${error.message}`);
+        }
+      }
+      document.getElementById("resultado").textContent = log.join("\n");
+    }
+  </script>
+</body>
+</html>
