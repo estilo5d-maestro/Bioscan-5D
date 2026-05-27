@@ -49,8 +49,22 @@
       doc.setTextColor(...GOLD); doc.setFont("helvetica","italic"); doc.setFontSize(13);
       doc.text(pa.subtitulo || "", M, 196);
 
+      // Felicitacion si el perfil actual es avanzado (destino)
+      let y = 224;
+      if (pa.es_destino) {
+        doc.setTextColor(...ORANGE); doc.setFont("helvetica","bold"); doc.setFontSize(10);
+        doc.text(`Felicitaciones, ${datos.nombre}.`, M, y); y += 15;
+        doc.setTextColor(...SUAVE); doc.setFont("helvetica","normal"); doc.setFontSize(10);
+        const ftxt = datos.esMaestria
+          ? (pa.maestria || "")
+          : "A diferencia de la mayoría, tu cuerpo ya habita un perfil avanzado.";
+        const fl = doc.splitTextToSize(ftxt, W - M*2);
+        doc.text(fl, M, y); y += fl.length * 13 + 14;
+      } else {
+        y = 232;
+      }
+
       // Bloques del perfil
-      let y = 232;
       const bloque = (titulo, texto) => {
         if (!texto) return;
         doc.setTextColor(...ORANGE); doc.setFont("helvetica","bold"); doc.setFontSize(9.5);
@@ -160,3 +174,4 @@
   };
   window.PDFGenerator = PDFGenerator;
 })();
+

@@ -336,3 +336,4 @@ const PERFILES = {
 };
 
 window.BIOSCAN_DATA = { UI, BLOQUES, PREGUNTAS, PERFILES };
+

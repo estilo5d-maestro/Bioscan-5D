@@ -1,43 +1,44 @@
 /* ============================================================
-   BIOSCAN 5D — iconos.js
-   Iconos SVG de linea fina, dibujados a medida (no emojis).
-   Color via stroke heredado de CSS (.q-icono path { stroke }).
+   BIOSCAN 5D — iconos.js  (v3 PRO)
+   Iconos premium con gradiente laser + doble trazo + glow.
+   Solo se usan en el RESULTADO (los bloques del perfil).
+   Las preguntas YA NO usan iconos (feedback Carlos).
    ============================================================ */
-const ICONOS = {
-  // columna vertebral
-  columna: '<svg class="q-icono" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M12 3c0 2-1 3-1 5s1 3 1 5 1 3 0 5"/><path d="M10 5h4M9.5 9h4M10 13h4M11 17h3"/></svg>',
-  // zonas de tension (cuerpo con puntos)
-  tension: '<svg class="q-icono" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V15M8 10l4-1 4 1M9 20l3-5 3 5"/></svg>',
-  // silla / postura sentada
-  silla: '<svg class="q-icono" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M7 4v8M7 12h8M15 4v8M7 12l-1 7M15 12l1 7M6 9h9"/></svg>',
-  // presion (reloj/tension previa)
-  presion: '<svg class="q-icono" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="13" r="7"/><path d="M12 13V9M12 4h0M9 4h6"/></svg>',
-  // desafio (flechas opuestas)
-  desafio: '<svg class="q-icono" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M4 12h7M8 9l3 3-3 3M20 12h-7M16 9l-3 3 3 3"/></svg>',
-  // respiracion (ondas)
-  respiracion: '<svg class="q-icono" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M3 10c2 0 2-2 4-2s2 4 4 4 2-4 4-4 2 2 4 2"/><path d="M3 15c2 0 2-1.5 4-1.5s2 3 4 3 2-3 4-3 2 1.5 4 1.5"/></svg>',
-  // voz (ondas de sonido)
-  voz: '<svg class="q-icono" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M12 4v16M8 8v8M16 8v8M4 11v2M20 11v2"/></svg>',
-  // percepcion (ojo)
-  percepcion: '<svg class="q-icono" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/></svg>',
-  // negociacion (manos/balance)
-  negociacion: '<svg class="q-icono" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M12 3v18M5 7h14M5 7l-2 5h4zM19 7l-2 5h4z"/></svg>',
-  // atencion (punto focal)
-  atencion: '<svg class="q-icono" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>',
-  // pausa
-  pausa: '<svg class="q-icono" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M10 9v6M14 9v6"/></svg>',
-  // reto (bandera/cima)
-  reto: '<svg class="q-icono" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M6 21V4M6 4l10 3-10 3"/><path d="M6 4c3-1 6-1 9 0"/></svg>'
+
+/* Cada icono trae su propio <defs> con gradiente y un filtro glow.
+   id unicos por icono para no colisionar. Tamaño 22x22 fino. */
+function ico(id, inner) {
+  return `<svg class="bp-ico" viewBox="0 0 24 24" fill="none">
+    <defs>
+      <linearGradient id="g_${id}" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#FFB627"/><stop offset="0.5" stop-color="#D13F26"/><stop offset="1" stop-color="#EF5036"/>
+      </linearGradient>
+      <filter id="f_${id}" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="0.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <g stroke="url(#g_${id})" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#f_${id})">
+      ${inner}
+    </g>
+  </svg>`;
+}
+
+const ICONOS_RESULTADO = {
+  // Patron caracteristico — huella/onda de patron
+  patron: ico("pat", '<path d="M3 14c1.5 0 1.5-5 3-5s1.5 7 3 7 1.5-9 3-9 1.5 6 3 6 1.5-3 3-3"/><circle cx="21" cy="10" r="0.5" fill="url(#g_pat)"/>'),
+  // Quien eres — figura/identidad con aura
+  quien: ico("qui", '<circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/><path d="M12 2.5v1.2M19 7l-.9.7M5 7l.9.7" opacity="0.7"/>'),
+  // Lo que tu cuerpo dice — globo de voz somatico
+  dice: ico("dic", '<path d="M4 6.5h16v9H9l-4 3.5v-3.5H4z"/><path d="M8.5 11h7M8.5 8.5h4" opacity="0.85"/>'),
+  // Lo que esta en juego — alerta elegante (escudo + signo)
+  juego: ico("jue", '<path d="M12 2.5l7.5 3v6c0 4.5-3.2 8-7.5 10C7.7 19.5 4.5 16 4.5 11.5v-6z"/><path d="M12 8v4M12 15v.3" opacity="0.95"/>'),
+  // Tu fortaleza — diamante/gema
+  fortaleza: ico("for", '<path d="M5 9l3-4.5h8L19 9l-7 11z"/><path d="M5 9h14M9.5 4.5L8 9l4 11M14.5 4.5L16 9l-4 11" opacity="0.7"/>'),
+  // Hacia donde vas — flecha ascendente/portal
+  hacia: ico("hac", '<path d="M12 20V6"/><path d="M6 11l6-6 6 6"/><path d="M7 20h10" opacity="0.6"/>'),
+  // Lo que vas a lograr — estrella/logro
+  lograr: ico("log", '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/>')
 };
 
-// Ilustraciones SVG de las 4 posturas clave (Decision B1)
-const POSTURAS = {
-  encorvada: '<svg viewBox="0 0 60 80" fill="none" stroke-width="2" stroke-linecap="round" stroke="currentColor"><circle cx="34" cy="14" r="7"/><path d="M34 21c-2 6-6 10-6 16M28 37c0 8 2 14 2 20M28 37h10M38 37c0 8 0 14 0 20"/><path d="M18 60h28"/></svg>',
-  apoyada_caida: '<svg viewBox="0 0 60 80" fill="none" stroke-width="2" stroke-linecap="round" stroke="currentColor"><circle cx="28" cy="14" r="7"/><path d="M28 21c-1 5-3 8-3 14M25 35v22M25 35h11M36 35v22"/><path d="M16 57h30M40 18v40"/></svg>',
-  recta_tensa: '<svg viewBox="0 0 60 80" fill="none" stroke-width="2" stroke-linecap="round" stroke="currentColor"><circle cx="30" cy="13" r="7"/><path d="M30 20v18M30 38h0M24 38v19M36 38v19M22 26h16"/><path d="M16 57h28"/></svg>',
-  expandida: '<svg viewBox="0 0 60 80" fill="none" stroke-width="2" stroke-linecap="round" stroke="currentColor"><circle cx="30" cy="12" r="7"/><path d="M30 19v19M30 38h0M24 38v19M36 38v19M20 25c5-3 15-3 20 0"/><path d="M16 57h28"/></svg>'
-};
-
-window.BIOSCAN_ICONOS = ICONOS;
-window.BIOSCAN_POSTURAS = POSTURAS;
+window.BIOSCAN_ICONOS_RESULTADO = ICONOS_RESULTADO;
 

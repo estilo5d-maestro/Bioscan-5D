@@ -2,7 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#050505">
   <title>BioScan 5D · Modo Umbral</title>
   <link rel="stylesheet" href="/css/bioscan.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -18,24 +21,35 @@
 
       <div class="app-content" x-data="bioscanApp()" x-init="init()" x-cloak>
 
-        <!-- ORBE + ANILLO -->
-        <div class="orb-container">
+        <!-- ===== ORBE (reposicionado, estados segun pantalla) ===== -->
+        <div class="orb-container" :class="{compact: estado==='cuestionario' || estado==='revision'}"
+             x-show="estado!=='transicion'">
           <div class="orb-core"><div class="orb-spark"></div></div>
-          <svg class="progress-ring" width="132" height="132">
-            <circle class="ring-track" r="58" cx="66" cy="66"></circle>
-            <circle class="ring-fill" r="58" cx="66" cy="66"
-              :stroke-dashoffset="estado==='cuestionario' ? 364 - (364 * progresoRing/100) : 364"></circle>
-          </svg>
-          <div class="ring-ticks" x-show="estado==='cuestionario'">
-            <template x-for="(on,i) in progresoTicks" :key="i">
-              <div class="ring-tick" :class="{on:on}" :style="`transform: rotate(${i*30}deg) translateX(-1px)`"></div>
+          <svg class="progress-ring" :width="(estado==='cuestionario'||estado==='revision')?98:124"
+               :height="(estado==='cuestionario'||estado==='revision')?98:124"
+               :viewBox="(estado==='cuestionario'||estado==='revision')?'0 0 98 98':'0 0 124 124'">
+            <template x-if="estado==='cuestionario'">
+              <g>
+                <circle class="ring-track" :r="45" :cx="49" :cy="49"></circle>
+                <circle class="ring-fill" :r="45" :cx="49" :cy="49"
+                  :stroke-dasharray="283" :stroke-dashoffset="283 - (283 * progresoRing/100)"></circle>
+              </g>
             </template>
-          </div>
+            <template x-if="estado==='calculo'">
+              <circle class="ring-laser" r="58" cx="62" cy="62" stroke-dasharray="90 274"></circle>
+            </template>
+            <template x-if="estado==='resultado'">
+              <circle class="ring-complete" r="58" cx="62" cy="62" stroke-dasharray="364"></circle>
+            </template>
+            <template x-if="estado==='bienvenida'||estado==='registro'||estado==='preparacion'||estado==='revision'">
+              <circle class="ring-track" :r="(estado==='revision')?45:58" :cx="(estado==='revision')?49:62" :cy="(estado==='revision')?49:62"></circle>
+            </template>
+          </svg>
         </div>
 
         <!-- ===== BIENVENIDA ===== -->
         <template x-if="estado==='bienvenida'">
-          <div class="step-card">
+          <div class="step-card anim-card">
             <span class="sello" x-text="UI.bienvenida.sello"></span>
             <h1 class="titulo" x-text="UI.bienvenida.titulo"></h1>
             <p class="parrafo" x-text="UI.bienvenida.parrafo1"></p>
@@ -48,7 +62,7 @@
 
         <!-- ===== REGISTRO ===== -->
         <template x-if="estado==='registro'">
-          <div class="step-card">
+          <div class="step-card anim-card">
             <span class="sello" x-text="UI.registro.sello"></span>
             <h1 class="titulo" x-text="UI.registro.titulo"></h1>
             <p class="parrafo" x-text="UI.registro.parrafo"></p>
@@ -88,10 +102,18 @@
         <!-- ===== CUESTIONARIO ===== -->
         <template x-if="estado==='cuestionario'">
           <div class="step-card" style="position:relative;">
-
-            <!-- Transicion controlada por usuario -->
+            <!-- Transicion entre bloques -->
             <template x-if="mostrarTransicion">
               <div class="transicion">
+                <div class="trans-orb">
+                  <div class="orb-container" style="margin:0;">
+                    <div class="orb-core"><div class="orb-spark"></div></div>
+                    <svg class="progress-ring" width="124" height="124" viewBox="0 0 124 124">
+                      <circle class="ring-fill" r="58" cx="62" cy="62" stroke-dasharray="364"
+                        :stroke-dashoffset="364 - (364 * progresoRing/100)"></circle>
+                    </svg>
+                  </div>
+                </div>
                 <p class="trans-l1" x-text="transicionData.l1"></p>
                 <p class="trans-l2" x-text="transicionData.l2"></p>
                 <div class="trans-btn-wrap">
@@ -103,42 +125,48 @@
             <div class="q-bloque-titulo" x-text="bloqueTitulo"></div>
             <div class="q-counter">Pregunta <span x-text="indiceActual+1"></span> de <span x-text="totalPreguntas"></span></div>
 
-            <!-- Icono SVG segun pregunta -->
-            <div x-html="iconoSVG(preguntaActual.icono)"></div>
-
-            <div class="q-texto" x-text="preguntaActual.texto"></div>
-
-            <template x-if="preguntaActual.tipo==='multi'">
-              <div class="multi-hint">
-                Seleccionadas: <span x-text="preguntaActual.id==='p2' ? tensiones.length : retosSeleccionados.length"></span>
-                de <span x-text="preguntaActual.maxSel"></span>
-              </div>
-            </template>
-
-            <div class="q-opciones">
-              <template x-for="(op,idx) in preguntaActual.opciones" :key="idx">
-                <div class="q-opcion" :class="{sel: estaSel(idx)}" @click="seleccionar(idx)">
-                  <div class="q-check" :class="{sq: preguntaActual.tipo==='multi'}"></div>
-                  <span x-text="op"></span>
+            <!-- Cuerpo de la pregunta con animacion de entrada/salida -->
+            <div class="q-body" :class="qAnim">
+              <div class="q-texto" x-text="preguntaActual.texto"></div>
+              <template x-if="preguntaActual.tipo==='multi'">
+                <div class="multi-hint">
+                  Seleccionadas: <span x-text="preguntaActual.id==='p2' ? tensiones.length : retosSeleccionados.length"></span>
+                  de <span x-text="preguntaActual.maxSel"></span>
                 </div>
               </template>
+              <div class="q-opciones">
+                <template x-for="(op,idx) in preguntaActual.opciones" :key="idx">
+                  <div class="q-opcion" :class="{sel: estaSel(idx)}" @click="seleccionar(idx)">
+                    <div class="q-check" :class="{sq: preguntaActual.tipo==='multi'}"></div>
+                    <span x-text="op"></span>
+                  </div>
+                </template>
+              </div>
             </div>
 
             <div class="q-nav">
-              <button class="btn-ghost" @click="anterior()" x-show="indiceActual>0">Anterior</button>
+              <button class="btn-ghost" @click="anterior()" x-show="indiceActual>0 && !volverARevision">Anterior</button>
               <button class="btn" @click="siguiente()" :disabled="!puedeAvanzar"
-                x-text="esUltima ? 'Ver mi perfil postural' : 'Siguiente'"></button>
+                x-text="volverARevision ? 'Guardar y volver' : (esUltima ? 'Ver mi perfil postural' : 'Siguiente')"></button>
             </div>
           </div>
         </template>
 
-        <!-- ===== REVISION PREVIA ===== -->
+        <!-- ===== REVISION (desplegable, punto 4) ===== -->
         <template x-if="estado==='revision'">
-          <div class="step-card">
+          <div class="step-card anim-card">
             <span class="sello" x-text="UI.revision.sello"></span>
             <h1 class="titulo sm" x-text="UI.revision.titulo"></h1>
             <p class="parrafo" x-text="UI.revision.texto"></p>
-            <div style="margin:18px 0;">
+
+            <button class="btn" @click="calcular()" x-text="UI.revision.boton"></button>
+
+            <div class="rev-toggle" @click="toggleRevision()">
+              <span x-text="revisionAbierta ? 'Ocultar mis respuestas' : 'Revisar mis respuestas'"></span>
+              <svg class="rev-chevron" :class="{open:revisionAbierta}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+
+            <div class="rev-panel" :style="revisionAbierta ? 'max-height:2000px' : 'max-height:0'">
               <template x-for="(p,i) in preguntas" :key="p.id">
                 <div class="rev-item">
                   <div class="rev-q" x-text="(i+1)+'. '+p.texto"></div>
@@ -149,7 +177,7 @@
                 </div>
               </template>
             </div>
-            <button class="btn" @click="calcular()" x-text="UI.revision.boton"></button>
+
             <div class="acceso-nota" x-text="UI.revision.nota"></div>
           </div>
         </template>
@@ -164,40 +192,40 @@
 
         <!-- ===== RESULTADO ===== -->
         <template x-if="estado==='resultado' && resultado">
-          <div class="step-card" :style="`--accent:${accentColor}`" x-init="$nextTick(()=>dibujarRadar())">
+          <div class="step-card anim-card" :style="`--accent:${accentColor}`" x-init="$nextTick(()=>dibujarRadar())">
 
             <div class="res-label" x-text="usuario.nombre + UI.resultado.revelacion1"></div>
             <div class="res-label" style="margin-bottom:18px;" x-text="UI.resultado.revelacion2"></div>
-
             <div class="res-label" x-text="UI.resultado.labelActual"></div>
             <div class="perfil-nombre" x-text="perfilActualData.nombre"></div>
             <div class="perfil-sub" x-text="perfilActualData.subtitulo"></div>
 
-            <!-- Felicitacion si es maestria -->
-            <template x-if="resultado.es_maestria">
+            <!-- FELICITACION: todo perfil avanzado (punto 10) -->
+            <template x-if="esAvanzado">
               <div class="felicitacion">
+                <span class="feli-badge">✨</span>
                 <strong x-text="'Felicitaciones, '+usuario.nombre+'. '"></strong>
-                <span x-text="perfilActualData.maestria"></span>
+                <span x-text="resultado.es_maestria ? perfilActualData.maestria : ('A diferencia de la mayoría, tu cuerpo ya habita un perfil avanzado. '+perfilActualData.subtitulo+'.')"></span>
               </div>
             </template>
 
             <div class="divisor"></div>
 
-            <!-- Bloques del perfil ORIGEN -->
+            <!-- Bloques perfil ORIGEN -->
             <template x-if="!perfilActualData.es_destino">
               <div>
-                <div class="bloque-perfil"><div class="bp-titulo">PATRÓN CARACTERÍSTICO</div><div class="bp-texto" x-text="perfilActualData.patron"></div></div>
-                <div class="bloque-perfil"><div class="bp-titulo">QUIÉN ERES</div><div class="bp-texto" x-text="perfilActualData.quien_eres"></div></div>
-                <div class="bloque-perfil"><div class="bp-titulo">LO QUE TU CUERPO ESTÁ DICIENDO</div><div class="bp-texto" x-text="perfilActualData.cuerpo_dice"></div></div>
-                <div class="bloque-perfil alerta"><div class="bp-titulo">LO QUE ESTÁ EN JUEGO</div><div class="bp-texto" x-text="perfilActualData.en_juego"></div></div>
-                <div class="bloque-perfil"><div class="bp-titulo">TU FORTALEZA</div><div class="bp-texto" x-text="perfilActualData.fortaleza"></div></div>
+                <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('patron')"></span>PATRÓN CARACTERÍSTICO</div><div class="bp-texto" x-text="perfilActualData.patron"></div></div>
+                <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('quien')"></span>QUIÉN ERES</div><div class="bp-texto" x-text="perfilActualData.quien_eres"></div></div>
+                <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('dice')"></span>LO QUE TU CUERPO ESTÁ DICIENDO</div><div class="bp-texto" x-text="perfilActualData.cuerpo_dice"></div></div>
+                <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('juego')"></span>LO QUE ESTÁ EN JUEGO</div><div class="bp-texto" x-text="perfilActualData.en_juego"></div></div>
+                <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('fortaleza')"></span>TU FORTALEZA</div><div class="bp-texto" x-text="perfilActualData.fortaleza"></div></div>
               </div>
             </template>
-            <!-- Bloques del perfil DESTINO (cuando el actual ya es avanzado) -->
+            <!-- Bloques perfil AVANZADO actual -->
             <template x-if="perfilActualData.es_destino">
               <div>
-                <div class="bloque-perfil"><div class="bp-titulo">QUIÉN ERES</div><div class="bp-texto" x-text="perfilActualData.quien_es"></div></div>
-                <div class="bloque-perfil"><div class="bp-titulo">LO QUE VAS A LOGRAR</div><div class="bp-texto" x-text="perfilActualData.vas_a_lograr"></div></div>
+                <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('quien')"></span>QUIÉN ERES</div><div class="bp-texto" x-text="perfilActualData.quien_es"></div></div>
+                <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('lograr')"></span>LO QUE VAS A LOGRAR</div><div class="bp-texto" x-text="perfilActualData.vas_a_lograr"></div></div>
               </div>
             </template>
 
@@ -213,15 +241,15 @@
                   <div class="destino-intro" x-text="UI.resultado.destinoIntro"></div>
                   <div class="destino-nombre" x-text="perfilDestinoData.nombre"></div>
                   <div class="perfil-sub" style="margin-bottom:12px;" x-text="perfilDestinoData.subtitulo"></div>
-                  <div class="bloque-perfil"><div class="bp-titulo">HACIA DÓNDE VAS</div><div class="bp-texto" x-text="perfilDestinoData.quien_es"></div></div>
-                  <div class="bloque-perfil"><div class="bp-titulo">LO QUE VAS A LOGRAR</div><div class="bp-texto" x-text="perfilDestinoData.vas_a_lograr"></div></div>
+                  <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('hacia')"></span>HACIA DÓNDE VAS</div><div class="bp-texto" x-text="perfilDestinoData.quien_es"></div></div>
+                  <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('lograr')"></span>LO QUE VAS A LOGRAR</div><div class="bp-texto" x-text="perfilDestinoData.vas_a_lograr"></div></div>
                 </div>
               </template>
               <template x-if="resultado.es_maestria">
                 <div>
                   <div class="destino-nombre" x-text="perfilActualData.nombre"></div>
                   <div class="destino-maestria">· Nivel Maestría ·</div>
-                  <div class="bloque-perfil"><div class="bp-titulo">LO QUE VAS A LOGRAR</div><div class="bp-texto" x-text="perfilActualData.vas_a_lograr"></div></div>
+                  <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('lograr')"></span>LO QUE VAS A LOGRAR</div><div class="bp-texto" x-text="perfilActualData.vas_a_lograr"></div></div>
                 </div>
               </template>
             </div>
@@ -245,6 +273,8 @@
               </div>
             </div>
 
+            <!-- Logo 5D final (punto 5) -->
+            <img class="logo-5d-final" src="https://cdn.shopify.com/s/files/1/0952/6060/6762/files/Logo_-_5D_-_Con_Borde_Redondo_Blanco.png?v=1774043494" alt="5D">
             <div class="firma-marca" x-text="UI.resultado.firma"></div>
           </div>
         </template>
@@ -262,3 +292,4 @@
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>
+

@@ -1,8 +1,7 @@
 /* ============================================================
-   BIOSCAN 5D · MODO UMBRAL
-   supabase-client.js — Comunicacion con Supabase y backend
-   ------------------------------------------------------------
-   v2: calcularPerfil ahora envia tambien las tensiones (P2 multi).
+   BIOSCAN 5D — supabase-client.js v3
+   Cambio: crearUsuario detecta correo ya registrado y devuelve
+   {yaExiste:true} para mensaje claro (punto 7b).
    ============================================================ */
 (function () {
   const cfg = window.BIOSCAN_CONFIG;
@@ -16,11 +15,18 @@
   const BioScanAPI = {
     async crearUsuario(nombre, email, consentimiento) {
       if (!sb) return null;
-      const { data, error } = await sb.from("users").upsert(
-        { email: email.toLowerCase().trim(), nombre: nombre.trim(), consentimiento_marketing: !!consentimiento, fuente: "bioscan_organico" },
-        { onConflict: "email" }
+      const correo = email.toLowerCase().trim();
+      // 1) Verificar si ya existe
+      const { data: existente } = await sb.from("users").select("id").eq("email", correo).maybeSingle();
+      if (existente) return { id: existente.id, yaExiste: true };
+      // 2) Crear
+      const { data, error } = await sb.from("users").insert(
+        { email: correo, nombre: nombre.trim(), consentimiento_marketing: !!consentimiento, fuente: "bioscan_organico" }
       ).select().single();
-      if (error) throw error;
+      if (error) {
+        if (error.code === "23505") return { yaExiste: true };  // unique violation
+        throw error;
+      }
       return data;
     },
 
@@ -36,8 +42,7 @@
     async guardarDiagnostico(userId, payload, retos, resultado) {
       if (!sb || !userId) return null;
       const { data, error } = await sb.from("diagnosticos").insert({
-        user_id: userId,
-        respuestas_json: payload,
+        user_id: userId, respuestas_json: payload,
         score_eje1: resultado.scores.eje1, score_eje2: resultado.scores.eje2,
         score_eje3: resultado.scores.eje3, score_eje4: resultado.scores.eje4,
         perfil_actual: resultado.perfil_actual, perfil_destino: resultado.perfil_destino,
