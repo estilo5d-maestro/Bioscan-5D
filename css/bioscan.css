@@ -60,7 +60,7 @@ body, html {
 }
 
 /* ============================================================
-   ORBE — reposicionado, mas grande, SIN marcas de reloj
+   ORBE Y ANILLO NEÓN 5D (FASE 1 - INMERSIÓN)
    ============================================================ */
 .orb-container {
   position: relative; width: 124px; height: 124px; margin: 6px 0 22px;
@@ -68,42 +68,88 @@ body, html {
 }
 .orb-container.compact { width: 92px; height: 92px; margin: 2px 0 14px; }
 
+/* Núcleo del orbe: Latido orgánico y profundo */
 .orb-core {
   position: absolute; width: 84px; height: 84px; border-radius: 50%;
-  background: radial-gradient(circle at 50% 40%, rgba(211,174,55,0.18), rgba(0,0,0,0.6) 70%);
+  background: radial-gradient(circle at 50% 40%, rgba(239, 80, 54, 0.15), rgba(5, 5, 5, 0.8) 70%);
   display: flex; align-items: center; justify-content: center;
-  animation: latido 1s ease-in-out infinite;
+  animation: latidoSomatico 3s ease-in-out infinite;
+  box-shadow: inset 0 0 20px rgba(239, 80, 54, 0.1);
 }
 .orb-container.compact .orb-core { width: 60px; height: 60px; }
-@keyframes latido {
-  0%,100% { transform: scale(1); box-shadow: 0 0 18px rgba(211,174,55,0.10); }
-  50% { transform: scale(1.05); box-shadow: 0 0 32px rgba(211,174,55,0.22); }
-}
-.orb-spark {
-  width: 13px; height: 13px; border-radius: 50%;
-  background: radial-gradient(circle, var(--gold), var(--orange)); filter: blur(1px);
-  animation: spark 1s ease-in-out infinite;
-}
-@keyframes spark { 0%,100% { opacity: 0.7; transform: scale(1);} 50% { opacity: 1; transform: scale(1.25);} }
 
-/* Anillo de progreso — SIN ticks, solo arco laser limpio */
-.progress-ring { position: absolute; transform: rotate(-90deg); z-index: 60; pointer-events: none; }
-.ring-track { stroke: rgba(255,255,255,0.07); stroke-width: 2.5; fill: transparent; }
-.ring-fill {
-  stroke: var(--orange-bright); stroke-width: 4; stroke-linecap: round; fill: transparent;
-  transition: stroke-dashoffset 0.7s cubic-bezier(.2,.8,.2,1);
-  filter: drop-shadow(0 0 4px var(--orange-bright)) drop-shadow(0 0 12px rgba(209,63,38,0.7));
+@keyframes latidoSomatico {
+  0%, 100% { transform: scale(1); box-shadow: inset 0 0 20px rgba(239, 80, 54, 0.1), 0 0 15px rgba(239, 80, 54, 0.05); }
+  50% { transform: scale(1.04); box-shadow: inset 0 0 30px rgba(239, 80, 54, 0.25), 0 0 35px rgba(239, 80, 54, 0.15); }
 }
-/* Laser girando (calculo y carga) */
-.ring-laser { stroke: var(--gold); stroke-width: 4; stroke-linecap: round; fill: transparent;
-  filter: drop-shadow(0 0 6px var(--gold)) drop-shadow(0 0 16px rgba(211,174,55,0.8));
-  transform-origin: center; animation: girar 1.1s linear infinite; }
-@keyframes girar { to { transform: rotate(360deg); } }
-/* Anillo completo encendido (final) */
-.ring-complete { stroke: var(--gold); stroke-width: 4; stroke-linecap: round; fill: transparent;
-  filter: drop-shadow(0 0 5px var(--gold)) drop-shadow(0 0 16px rgba(211,174,55,0.7));
-  animation: pulseComplete 2.4s ease-in-out infinite; }
-@keyframes pulseComplete { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }
+
+/* Chispa central viva (Color Naranja 5D) */
+.orb-spark {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: #EF5036;
+  box-shadow: 0 0 10px #EF5036, 0 0 20px #D13F26;
+  animation: sparkVivo 1.5s ease-in-out infinite;
+}
+@keyframes sparkVivo {
+  0%, 100% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 15px #EF5036, 0 0 30px #FF6A52; }
+}
+
+/* ANILLO DE PROGRESO - Base y Neón */
+.progress-ring { position: absolute; transform: rotate(-90deg); z-index: 60; pointer-events: none; }
+
+/* Track (Fondo del anillo) - Sutil pero visible */
+.ring-track {
+  stroke: rgba(255, 255, 255, 0.04);
+  stroke-width: 2.5;
+  fill: transparent;
+}
+
+/* Fill (Láser de progreso durante cuestionario) - Palpitante */
+.ring-fill {
+  stroke: #EF5036;
+  stroke-width: 4;
+  stroke-linecap: round;
+  fill: transparent;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 0 6px rgba(239, 80, 54, 0.8)) drop-shadow(0 0 14px rgba(239, 80, 54, 0.5));
+  animation: neonBreathe 3s ease-in-out infinite;
+}
+
+@keyframes neonBreathe {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(239, 80, 54, 0.6)) drop-shadow(0 0 10px rgba(239, 80, 54, 0.3)); }
+  50% { filter: drop-shadow(0 0 8px rgba(255, 106, 82, 0.9)) drop-shadow(0 0 20px rgba(239, 80, 54, 0.6)); }
+}
+
+/* Láser girando (Cálculo) - Tipo IA procesando, agresividad contenida */
+.ring-laser {
+  stroke: #EF5036;
+  stroke-width: 4;
+  stroke-linecap: round;
+  fill: transparent;
+  filter: drop-shadow(0 0 8px #EF5036) drop-shadow(0 0 20px #FF6A52);
+  transform-origin: center;
+  animation: girarLaser 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes girarLaser {
+  0% { transform: rotate(0deg); stroke-dasharray: 10 300; stroke-dashoffset: 0; }
+  50% { stroke-dasharray: 120 200; stroke-dashoffset: -50; filter: drop-shadow(0 0 15px #EF5036) drop-shadow(0 0 30px #FF6A52); }
+  100% { transform: rotate(360deg); stroke-dasharray: 10 300; stroke-dashoffset: -274; }
+}
+
+/* Anillo completo encendido (Resultado) - Máximo poder */
+.ring-complete {
+  stroke: #EF5036;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  fill: transparent;
+  filter: drop-shadow(0 0 10px rgba(239, 80, 54, 0.8)) drop-shadow(0 0 25px rgba(239, 80, 54, 0.5));
+  animation: pulseResultado 2.5s ease-in-out infinite;
+}
+@keyframes pulseResultado {
+  0%, 100% { opacity: 0.85; transform: scale(1); filter: drop-shadow(0 0 8px rgba(239, 80, 54, 0.6)); }
+  50% { opacity: 1; transform: scale(1.03); filter: drop-shadow(0 0 18px rgba(255, 106, 82, 1)) drop-shadow(0 0 40px rgba(239, 80, 54, 0.8)); }
+}
 
 /* ---------- TIPOGRAFIA ---------- */
 .step-card { width: 100%; text-align: center; position: relative; }
