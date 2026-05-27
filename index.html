@@ -21,18 +21,29 @@
 
       <div class="app-content" x-data="bioscanApp()" x-init="init()" x-cloak>
 
-        <!-- ===== ORBE NEÓN 5D PERSISTENTE ===== -->
-        <div class="orb-container" :class="{
-            'compact': estado==='cuestionario' || estado==='revision',
-            'is-calculando': estado==='calculo',
-            'is-resultado': estado==='resultado'
-          }" x-show="estado!=='transicion'">
+        <!-- ===== ORBE (reposicionado, estados segun pantalla) ===== -->
+        <div class="orb-container" :class="{compact: estado==='cuestionario' || estado==='revision'}"
+             x-show="estado!=='transicion'">
           <div class="orb-core"><div class="orb-spark"></div></div>
-          <svg class="progress-ring" width="140" height="140" viewBox="0 0 140 140">
-            <circle class="ring-track" r="64" cx="70" cy="70"></circle>
-            <circle class="ring-fill" r="64" cx="70" cy="70"
-              :style="estado==='cuestionario' ? `stroke-dashoffset: ${402 - (402 * progresoRing/100)}` : ''">
-            </circle>
+          <svg class="progress-ring" :width="(estado==='cuestionario'||estado==='revision')?98:124"
+               :height="(estado==='cuestionario'||estado==='revision')?98:124"
+               :viewBox="(estado==='cuestionario'||estado==='revision')?'0 0 98 98':'0 0 124 124'">
+            <template x-if="estado==='cuestionario'">
+              <g>
+                <circle class="ring-track" :r="45" :cx="49" :cy="49"></circle>
+                <circle class="ring-fill" :r="45" :cx="49" :cy="49"
+                  :stroke-dasharray="283" :stroke-dashoffset="283 - (283 * progresoRing/100)"></circle>
+              </g>
+            </template>
+            <template x-if="estado==='calculo'">
+              <circle class="ring-laser" r="58" cx="62" cy="62" stroke-dasharray="90 274"></circle>
+            </template>
+            <template x-if="estado==='resultado'">
+              <circle class="ring-complete" r="58" cx="62" cy="62" stroke-dasharray="364"></circle>
+            </template>
+            <template x-if="estado==='bienvenida'||estado==='registro'||estado==='preparacion'||estado==='revision'">
+              <circle class="ring-track" :r="(estado==='revision')?45:58" :cx="(estado==='revision')?49:62" :cy="(estado==='revision')?49:62"></circle>
+            </template>
           </svg>
         </div>
 
@@ -95,10 +106,11 @@
             <template x-if="mostrarTransicion">
               <div class="transicion">
                 <div class="trans-orb">
-                  <div class="orb-container is-resultado" style="margin:0; transform: scale(0.85);">
+                  <div class="orb-container" style="margin:0;">
                     <div class="orb-core"><div class="orb-spark"></div></div>
-                    <svg class="progress-ring" width="140" height="140" viewBox="0 0 140 140">
-                      <circle class="ring-fill" r="64" cx="70" cy="70" style="stroke-dashoffset: 0;"></circle>
+                    <svg class="progress-ring" width="124" height="124" viewBox="0 0 124 124">
+                      <circle class="ring-fill" r="58" cx="62" cy="62" stroke-dasharray="364"
+                        :stroke-dashoffset="364 - (364 * progresoRing/100)"></circle>
                     </svg>
                   </div>
                 </div>
@@ -280,4 +292,5 @@
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>
+
 
