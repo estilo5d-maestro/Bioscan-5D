@@ -4,199 +4,261 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BioScan 5D · Modo Umbral</title>
-
   <link rel="stylesheet" href="/css/bioscan.css">
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-
 <body>
   <div id="scanner-wrapper-master">
     <div class="sonar-bg"></div>
-
     <div class="iphone-frame">
       <div class="dynamic-island"></div>
       <div class="screen-gloss"></div>
 
       <div class="app-content" x-data="bioscanApp()" x-init="init()" x-cloak>
 
+        <!-- ORBE + ANILLO -->
         <div class="orb-container">
-          <div class="frequency-core">
-            <div class="energy-frequency freq1"></div>
-            <div class="energy-frequency freq2"></div>
-            <div class="energy-frequency freq3"></div>
-          </div>
-          <svg class="progress-ring" width="120" height="120">
-            <circle class="progress-ring__circle" r="52" cx="60" cy="60"></circle>
-            <circle class="progress-ring__fill" r="52" cx="60" cy="60"
-                    :stroke-dashoffset="estado === 'cuestionario' ? 326 - (326 * progreso / 100) : 326"></circle>
+          <div class="orb-core"><div class="orb-spark"></div></div>
+          <svg class="progress-ring" width="132" height="132">
+            <circle class="ring-track" r="58" cx="66" cy="66"></circle>
+            <circle class="ring-fill" r="58" cx="66" cy="66"
+              :stroke-dashoffset="estado==='cuestionario' ? 364 - (364 * progresoRing/100) : 364"></circle>
           </svg>
+          <div class="ring-ticks" x-show="estado==='cuestionario'">
+            <template x-for="(on,i) in progresoTicks" :key="i">
+              <div class="ring-tick" :class="{on:on}" :style="`transform: rotate(${i*30}deg) translateX(-1px)`"></div>
+            </template>
+          </div>
         </div>
 
-        <template x-if="estado === 'bienvenida'">
+        <!-- ===== BIENVENIDA ===== -->
+        <template x-if="estado==='bienvenida'">
           <div class="step-card">
-            <span class="subtitle-top">BIOSCAN 5D · MODO UMBRAL</span>
-            <h1 class="main-title">Tu cuerpo lleva años hablándote</h1>
-            <p>En 4 minutos vas a descubrir tu Modo Postural actual y hacia dónde necesitas migrar para enfrentar los retos que tienes por delante. No es un test de personalidad. Es un espejo somático.</p>
-            <button class="btn-cta" @click="irARegistro()">Comenzar mi BioScan</button>
-            <div class="tech-signature">AMY CUDDY · ERIK PEPER · BEHAVIORAL DESIGN</div>
+            <span class="sello" x-text="UI.bienvenida.sello"></span>
+            <h1 class="titulo" x-text="UI.bienvenida.titulo"></h1>
+            <p class="parrafo" x-text="UI.bienvenida.parrafo1"></p>
+            <p class="parrafo" x-html="UI.bienvenida.parrafo2"></p>
+            <p class="parrafo" x-text="UI.bienvenida.parrafo3"></p>
+            <button class="btn" @click="irARegistro()" x-text="UI.bienvenida.boton"></button>
+            <div class="firma-tech" x-text="UI.bienvenida.respaldo"></div>
           </div>
         </template>
 
-        <template x-if="estado === 'registro'">
+        <!-- ===== REGISTRO ===== -->
+        <template x-if="estado==='registro'">
           <div class="step-card">
-            <span class="subtitle-top">PASO 1 DE 2</span>
-            <h1 class="main-title">Tu perfil viaja contigo</h1>
-            <p>Tu correo es la llave única de tu BioScan. Ahí recibirás tu diagnóstico completo.</p>
-
-            <div class="vip-form-container">
-              <template x-if="error">
-                <div class="error-msg" x-text="error"></div>
-              </template>
-
-              <input type="text" class="vip-input" placeholder="¿Cómo te llamamos?"
-                     x-model="usuario.nombre" :disabled="cargando">
-              <input type="email" class="vip-input" placeholder="tu@correo.com"
-                     x-model="usuario.email" :disabled="cargando">
-
-              <div class="consent-row">
-                <input type="checkbox" id="consent" x-model="usuario.consentimiento">
-                <label for="consent">Acepto recibir mi diagnóstico y las novedades del Umbral 5D #01.</label>
+            <span class="sello" x-text="UI.registro.sello"></span>
+            <h1 class="titulo" x-text="UI.registro.titulo"></h1>
+            <p class="parrafo" x-text="UI.registro.parrafo"></p>
+            <div class="form-box">
+              <template x-if="error"><div class="error-msg" x-text="error"></div></template>
+              <input type="text" class="input" :placeholder="UI.registro.placeholderNombre" x-model="usuario.nombre" :disabled="cargando">
+              <input type="email" class="input" :placeholder="UI.registro.placeholderEmail" x-model="usuario.email" :disabled="cargando">
+              <div class="consent">
+                <input type="checkbox" id="cons" x-model="usuario.consentimiento">
+                <label for="cons" x-text="UI.registro.consentimiento"></label>
               </div>
-
-              <button class="btn-cta" @click="enviarRegistro()" :disabled="cargando">
-                <span x-show="!cargando">Activar mi BioScan</span>
+              <button class="btn" @click="enviarRegistro()" :disabled="cargando">
+                <span x-show="!cargando" x-text="UI.registro.boton"></span>
                 <span x-show="cargando"><div class="spinner"></div></span>
               </button>
             </div>
-            <div class="acceso-nota">🔒 No compartimos tus datos con terceros.</div>
+            <div class="acceso-nota">🔒 <span x-text="UI.registro.confianza"></span></div>
           </div>
         </template>
 
-        <template x-if="estado === 'preparacion'">
+        <!-- ===== PREPARACION ===== -->
+        <template x-if="estado==='preparacion'">
           <div class="step-card">
-            <span class="subtitle-top">ANTES DE EMPEZAR</span>
-            <h1 class="main-title">Una sola cosa</h1>
-            <p>Responde con tu cuerpo, no con tu mente. La primera respuesta que llegue es la correcta. No hay opciones malas, solo información valiosa sobre ti.</p>
-            <p style="color: var(--brand-gold);">Toma una respiración profunda. Cuando exhales, comienza.</p>
-            <button class="btn-cta" @click="empezarCuestionario()">Estoy listo</button>
+            <span class="sello" x-text="UI.preparacion.sello"></span>
+            <h1 class="titulo" x-text="UI.preparacion.titulo"></h1>
+            <p class="prep-texto prep-1" x-text="UI.preparacion.texto1"></p>
+            <p class="prep-texto prep-2" x-text="UI.preparacion.texto2"></p>
+            <p class="prep-texto prep-3" x-text="UI.preparacion.texto3"></p>
+            <div class="respira">
+              <span x-text="UI.preparacion.respira1"></span><br>
+              <span x-text="UI.preparacion.respira2"></span>
+            </div>
+            <button class="btn" @click="empezarCuestionario()" x-text="UI.preparacion.boton"></button>
           </div>
         </template>
 
-        <template x-if="estado === 'cuestionario'">
-          <div class="step-card" style="position: relative;">
+        <!-- ===== CUESTIONARIO ===== -->
+        <template x-if="estado==='cuestionario'">
+          <div class="step-card" style="position:relative;">
 
+            <!-- Transicion controlada por usuario -->
             <template x-if="mostrarTransicion">
-              <div class="transicion-bloque">
-                <p x-text="textoTransicion"></p>
+              <div class="transicion">
+                <p class="trans-l1" x-text="transicionData.l1"></p>
+                <p class="trans-l2" x-text="transicionData.l2"></p>
+                <div class="trans-btn-wrap">
+                  <button class="btn" @click="continuarTransicion()" x-text="UI.transiciones.boton"></button>
+                </div>
               </div>
             </template>
 
-            <div class="q-bloque" x-text="preguntaActual.bloque"></div>
-            <div class="q-counter">
-              Pregunta <span x-text="indiceActual + 1"></span> de <span x-text="totalPreguntas"></span>
-            </div>
+            <div class="q-bloque-titulo" x-text="bloqueTitulo"></div>
+            <div class="q-counter">Pregunta <span x-text="indiceActual+1"></span> de <span x-text="totalPreguntas"></span></div>
+
+            <!-- Icono SVG segun pregunta -->
+            <div x-html="iconoSVG(preguntaActual.icono)"></div>
+
             <div class="q-texto" x-text="preguntaActual.texto"></div>
 
-            <template x-if="preguntaActual.tipo === 'multi'">
+            <template x-if="preguntaActual.tipo==='multi'">
               <div class="multi-hint">
-                Seleccionadas: <span x-text="retosSeleccionados.length"></span> de <span x-text="preguntaActual.maxSelecciones"></span>
+                Seleccionadas: <span x-text="preguntaActual.id==='p2' ? tensiones.length : retosSeleccionados.length"></span>
+                de <span x-text="preguntaActual.maxSel"></span>
               </div>
             </template>
 
             <div class="q-opciones">
-              <template x-for="(opcion, idx) in preguntaActual.opciones" :key="idx">
-                <div class="q-opcion"
-                     :class="{ 'selected': estaSeleccionada(idx) }"
-                     @click="seleccionar(idx)"
-                     x-text="opcion.txt"></div>
+              <template x-for="(op,idx) in preguntaActual.opciones" :key="idx">
+                <div class="q-opcion" :class="{sel: estaSel(idx)}" @click="seleccionar(idx)">
+                  <div class="q-check" :class="{sq: preguntaActual.tipo==='multi'}"></div>
+                  <span x-text="op"></span>
+                </div>
               </template>
             </div>
 
             <div class="q-nav">
-              <button class="btn-ghost" @click="anterior()" x-show="indiceActual > 0">Anterior</button>
-              <button class="btn-cta" @click="siguiente()" :disabled="!puedeAvanzar">
-                <span x-text="esUltimaPregunta ? 'Ver mi Modo Postural' : 'Siguiente'"></span>
-              </button>
+              <button class="btn-ghost" @click="anterior()" x-show="indiceActual>0">Anterior</button>
+              <button class="btn" @click="siguiente()" :disabled="!puedeAvanzar"
+                x-text="esUltima ? 'Ver mi perfil postural' : 'Siguiente'"></button>
             </div>
           </div>
         </template>
 
-        <template x-if="estado === 'calculo'">
+        <!-- ===== REVISION PREVIA ===== -->
+        <template x-if="estado==='revision'">
           <div class="step-card">
-            <h1 class="calculo-titulo">Analizando tu cuerpo...</h1>
-            <div class="calculo-texto" x-text="textoCalculo"></div>
+            <span class="sello" x-text="UI.revision.sello"></span>
+            <h1 class="titulo sm" x-text="UI.revision.titulo"></h1>
+            <p class="parrafo" x-text="UI.revision.texto"></p>
+            <div style="margin:18px 0;">
+              <template x-for="(p,i) in preguntas" :key="p.id">
+                <div class="rev-item">
+                  <div class="rev-q" x-text="(i+1)+'. '+p.texto"></div>
+                  <div class="rev-a">
+                    <span x-text="textoRespuesta(p)"></span>
+                    <span class="rev-edit" @click="editarPregunta(i)">editar</span>
+                  </div>
+                </div>
+              </template>
+            </div>
+            <button class="btn" @click="calcular()" x-text="UI.revision.boton"></button>
+            <div class="acceso-nota" x-text="UI.revision.nota"></div>
           </div>
         </template>
 
-        <template x-if="estado === 'resultado' && resultado">
-          <div class="step-card" x-init="$nextTick(() => dibujarRadar())">
+        <!-- ===== CALCULO ===== -->
+        <template x-if="estado==='calculo'">
+          <div class="step-card">
+            <h1 class="calc-titulo" x-text="UI.calculo.titulo"></h1>
+            <div class="calc-texto" x-text="textoCalculo"></div>
+          </div>
+        </template>
 
-            <div class="resultado-label">TU MODO POSTURAL ACTUAL</div>
+        <!-- ===== RESULTADO ===== -->
+        <template x-if="estado==='resultado' && resultado">
+          <div class="step-card" :style="`--accent:${accentColor}`" x-init="$nextTick(()=>dibujarRadar())">
+
+            <div class="res-label" x-text="usuario.nombre + UI.resultado.revelacion1"></div>
+            <div class="res-label" style="margin-bottom:18px;" x-text="UI.resultado.revelacion2"></div>
+
+            <div class="res-label" x-text="UI.resultado.labelActual"></div>
             <div class="perfil-nombre" x-text="perfilActualData.nombre"></div>
-            <div class="perfil-subtitulo" x-text="perfilActualData.subtitulo"></div>
+            <div class="perfil-sub" x-text="perfilActualData.subtitulo"></div>
+
+            <!-- Felicitacion si es maestria -->
+            <template x-if="resultado.es_maestria">
+              <div class="felicitacion">
+                <strong x-text="'Felicitaciones, '+usuario.nombre+'. '"></strong>
+                <span x-text="perfilActualData.maestria"></span>
+              </div>
+            </template>
 
             <div class="divisor"></div>
 
-            <div class="bloque-perfil">
-              <div class="titulo">🎯 PATRÓN CARACTERÍSTICO</div>
-              <div class="texto" x-text="perfilActualData.patron"></div>
-            </div>
-            <div class="bloque-perfil">
-              <div class="titulo">👤 QUIÉN ERES</div>
-              <div class="texto" x-text="perfilActualData.quien_eres"></div>
-            </div>
-            <div class="bloque-perfil">
-              <div class="titulo">🔍 LO QUE TU CUERPO ESTÁ DICIENDO</div>
-              <div class="texto" x-text="perfilActualData.cuerpo_dice"></div>
-            </div>
-            <div class="bloque-perfil">
-              <div class="titulo">💎 TU FORTALEZA OCULTA</div>
-              <div class="texto" x-text="perfilActualData.fortaleza"></div>
-            </div>
+            <!-- Bloques del perfil ORIGEN -->
+            <template x-if="!perfilActualData.es_destino">
+              <div>
+                <div class="bloque-perfil"><div class="bp-titulo">PATRÓN CARACTERÍSTICO</div><div class="bp-texto" x-text="perfilActualData.patron"></div></div>
+                <div class="bloque-perfil"><div class="bp-titulo">QUIÉN ERES</div><div class="bp-texto" x-text="perfilActualData.quien_eres"></div></div>
+                <div class="bloque-perfil"><div class="bp-titulo">LO QUE TU CUERPO ESTÁ DICIENDO</div><div class="bp-texto" x-text="perfilActualData.cuerpo_dice"></div></div>
+                <div class="bloque-perfil alerta"><div class="bp-titulo">LO QUE ESTÁ EN JUEGO</div><div class="bp-texto" x-text="perfilActualData.en_juego"></div></div>
+                <div class="bloque-perfil"><div class="bp-titulo">TU FORTALEZA</div><div class="bp-texto" x-text="perfilActualData.fortaleza"></div></div>
+              </div>
+            </template>
+            <!-- Bloques del perfil DESTINO (cuando el actual ya es avanzado) -->
+            <template x-if="perfilActualData.es_destino">
+              <div>
+                <div class="bloque-perfil"><div class="bp-titulo">QUIÉN ERES</div><div class="bp-texto" x-text="perfilActualData.quien_es"></div></div>
+                <div class="bloque-perfil"><div class="bp-titulo">LO QUE VAS A LOGRAR</div><div class="bp-texto" x-text="perfilActualData.vas_a_lograr"></div></div>
+              </div>
+            </template>
 
-            <div class="resultado-label" style="margin-top:20px;">TU HUELLA POSTURAL · DÍA 0</div>
-            <div class="radar-container">
-              <canvas id="radarChart"></canvas>
-            </div>
+            <!-- Radar -->
+            <div class="res-label" style="margin-top:18px;" x-text="UI.resultado.labelHuella"></div>
+            <div class="radar-box"><canvas id="radarChart"></canvas></div>
+            <p class="parrafo" style="font-size:13px;" x-text="UI.resultado.huellaTexto"></p>
 
+            <!-- Destino -->
             <div class="destino-card">
-              <div class="resultado-label">TU PRÓXIMO UMBRAL</div>
-              <div class="perfil-nombre" style="font-size:24px;" x-text="perfilDestinoData.nombre"></div>
-              <div class="perfil-subtitulo" style="margin-bottom:14px;" x-text="perfilDestinoData.subtitulo"></div>
-              <div class="bloque-perfil">
-                <div class="titulo">🚪 HACIA DÓNDE VAS</div>
-                <div class="texto" x-text="'Tu plan de 7 días ' + perfilDestinoData.proximo_umbral"></div>
-              </div>
+              <template x-if="!resultado.es_maestria">
+                <div>
+                  <div class="destino-intro" x-text="UI.resultado.destinoIntro"></div>
+                  <div class="destino-nombre" x-text="perfilDestinoData.nombre"></div>
+                  <div class="perfil-sub" style="margin-bottom:12px;" x-text="perfilDestinoData.subtitulo"></div>
+                  <div class="bloque-perfil"><div class="bp-titulo">HACIA DÓNDE VAS</div><div class="bp-texto" x-text="perfilDestinoData.quien_es"></div></div>
+                  <div class="bloque-perfil"><div class="bp-titulo">LO QUE VAS A LOGRAR</div><div class="bp-texto" x-text="perfilDestinoData.vas_a_lograr"></div></div>
+                </div>
+              </template>
+              <template x-if="resultado.es_maestria">
+                <div>
+                  <div class="destino-nombre" x-text="perfilActualData.nombre"></div>
+                  <div class="destino-maestria">· Nivel Maestría ·</div>
+                  <div class="bloque-perfil"><div class="bp-titulo">LO QUE VAS A LOGRAR</div><div class="bp-texto" x-text="perfilActualData.vas_a_lograr"></div></div>
+                </div>
+              </template>
             </div>
 
-            <div class="cta-final">
-              <p style="color:#fff; font-size:15px; line-height:1.5;">
-                Conocer tu perfil es apenas el primer umbral. El <strong>4 de junio</strong>, en Umbral 5D #01, vas a entender por qué tu cuerpo se comporta así y a vivir la experiencia que transforma ese conocimiento en poder real.
-              </p>
-              <button class="btn-cta" @click="irAlUmbral()">Reservar mi lugar en el Umbral</button>
-              <button class="btn-ghost" @click="descargarPDF()">Descargar mi diagnóstico (PDF)</button>
+            <!-- Cierre -->
+            <div class="cierre">
+              <div class="cierre-titulo" x-text="UI.resultado.cierreTitulo"></div>
+              <p x-html="UI.resultado.cierreParrafo"></p>
+              <p x-text="UI.resultado.cierreParrafo2"></p>
+            </div>
+
+            <div class="cta-wrap">
+              <button class="btn" @click="irAlUmbral()" x-text="UI.resultado.botonUmbral"></button>
+              <button class="btn-ghost" @click="descargarPDF()" x-text="UI.resultado.botonPDF"></button>
+              <template x-if="puedeRepetir()">
+                <button class="btn-ghost" @click="repetirBioScan()" x-text="UI.resultado.botonRepetir"></button>
+              </template>
               <div class="acceso-nota">
-                Acceso abierto · 4 de junio · 6:00 PM Colombia · Online en vivo<br>
-                En los próximos minutos recibirás tu diagnóstico completo en tu correo.
+                <span x-text="UI.resultado.acceso"></span><br>
+                <span x-text="UI.resultado.accesoPDF"></span>
               </div>
             </div>
 
+            <div class="firma-marca" x-text="UI.resultado.firma"></div>
           </div>
         </template>
 
       </div>
-      </div>
+    </div>
   </div>
 
   <script src="/js/config.js"></script>
   <script src="/js/data.js"></script>
+  <script src="/js/iconos.js"></script>
   <script src="/js/supabase-client.js"></script>
   <script src="/js/pdf-generator.js"></script>
   <script src="/js/bioscan-app.js"></script>
-
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>

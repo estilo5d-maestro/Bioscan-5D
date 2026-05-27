@@ -1,111 +1,90 @@
 /* ============================================================
-   BIOSCAN 5D · MODO UMBRAL
-   bioscan-app.js — Logica del flujo (componente Alpine.js)
+   BIOSCAN 5D · MODO UMBRAL — EDICIÓN TEMPORADA 1
+   bioscan-app.js — Lógica del flujo (Alpine.js) v2
    ------------------------------------------------------------
-   Maneja los estados: bienvenida -> registro -> preparacion ->
-   cuestionario (12) -> calculo -> resultado.
-   Recoge respuestas, llama al algoritmo protegido, guarda en
-   Supabase, genera PDF y muestra resultado con CTA.
+   Flujo: bienvenida → registro → preparacion → cuestionario(12)
+   → revision previa (A3) → calculo → resultado.
+   Soporta: multi-select (P2 6 opc, P12), transiciones con boton
+   Continuar, 1 repeticion, Nivel Maestria.
    ============================================================ */
 
 function bioscanApp() {
   return {
-    // ---------- ESTADO GLOBAL ----------
-    estado: "bienvenida", // bienvenida | registro | preparacion | cuestionario | calculo | resultado
+    estado: "bienvenida",   // bienvenida|registro|preparacion|cuestionario|revision|calculo|resultado
     cargando: false,
     error: null,
 
-    // datos de usuario
+    // datos
+    UI: window.BIOSCAN_DATA.UI,
+    BLOQUES: window.BIOSCAN_DATA.BLOQUES,
+    preguntas: window.BIOSCAN_DATA.PREGUNTAS,
+    perfiles: window.BIOSCAN_DATA.PERFILES,
+
+    // usuario
     usuario: { nombre: "", email: "", consentimiento: false },
     userId: null,
 
     // cuestionario
-    preguntas: window.BIOSCAN_DATA.PREGUNTAS,
-    perfiles: window.BIOSCAN_DATA.PERFILES,
-    indiceActual: 0,            // que pregunta estamos viendo
-    respuestas: {},             // { p1: indiceOpcion, ... }
-    retosSeleccionados: [],     // de P12
+    indiceActual: 0,
+    respuestas: {},          // { p1: idx, p3: idx, ... }  (single)
+    tensiones: [],           // P2 multi
+    retosSeleccionados: [],  // P12 multi (indices)
     mostrarTransicion: false,
-    textoTransicion: "",
+    transicionData: null,
 
-    // resultado
+    // calculo / resultado
+    textoCalculo: "",
     resultado: null,
     perfilActualData: null,
     perfilDestinoData: null,
-
-    // calculo dramatizado
-    textoCalculo: "Analizando tu cuerpo...",
+    vecesRepetido: 0,
+    modoRevisionEdit: false,
 
     // ---------- COMPUTED ----------
-    get preguntaActual() {
-      return this.preguntas[this.indiceActual];
+    get preguntaActual() { return this.preguntas[this.indiceActual]; },
+    get totalPreguntas() { return this.preguntas.length; },
+    get esUltima() { return this.indiceActual === this.preguntas.length - 1; },
+    get bloqueTitulo() { return this.BLOQUES[this.preguntaActual.bloque]; },
+    get progresoTicks() {
+      // 12 ticks que se encienden segun pregunta respondida
+      const respondidas = this.indiceActual;
+      return Array.from({ length: 12 }, (_, i) => i < respondidas);
     },
-    get progreso() {
-      return Math.round(((this.indiceActual) / this.preguntas.length) * 100);
-    },
-    get totalPreguntas() {
-      return this.preguntas.length;
-    },
-    get esUltimaPregunta() {
-      return this.indiceActual === this.preguntas.length - 1;
+    get progresoRing() {
+      return Math.round((this.indiceActual / this.preguntas.length) * 100);
     },
     get puedeAvanzar() {
       const p = this.preguntaActual;
       if (p.tipo === "multi") {
-        return this.retosSeleccionados.length > 0;
+        if (p.id === "p2") return this.tensiones.length > 0;
+        if (p.id === "p12") return this.retosSeleccionados.length > 0;
       }
       return this.respuestas[p.id] !== undefined;
     },
 
-    // ---------- INICIALIZACION ----------
     init() {
-      // Pre-cargar email si viene por URL (?email=...)
       const params = new URLSearchParams(window.location.search);
       const emailParam = params.get("email");
-      if (emailParam) {
-        this.usuario.email = decodeURIComponent(emailParam);
-      }
+      if (emailParam) this.usuario.email = decodeURIComponent(emailParam);
     },
 
-    // ---------- NAVEGACION DE ESTADOS ----------
-    irARegistro() {
-      this.estado = "registro";
-    },
+    // ---------- NAVEGACION ----------
+    irARegistro() { this.estado = "registro"; this.error = null; },
 
     async enviarRegistro() {
       this.error = null;
-      if (!this.usuario.nombre.trim()) {
-        this.error = "Por favor escribe tu nombre.";
-        return;
-      }
-      if (!this.validarEmail(this.usuario.email)) {
-        this.error = "Por favor escribe un correo válido.";
-        return;
-      }
-      if (!this.usuario.consentimiento) {
-        this.error = "Necesitamos tu autorización para enviarte tu plan.";
-        return;
-      }
+      if (!this.usuario.nombre.trim()) { this.error = "Por favor escribe tu nombre."; return; }
+      if (!this.validarEmail(this.usuario.email)) { this.error = "Por favor escribe un correo válido."; return; }
+      if (!this.usuario.consentimiento) { this.error = "Necesitamos tu autorización para enviarte tu diagnóstico."; return; }
 
       this.cargando = true;
       try {
-        // 1. Crear usuario en Supabase
-        const user = await window.BioScanAPI.crearUsuario(
-          this.usuario.nombre,
-          this.usuario.email,
-          this.usuario.consentimiento
-        );
-        this.userId = user.id;
-
-        // 2. Notificar a RD Station (registro inicial) - no bloqueante
+        const user = await window.BioScanAPI.crearUsuario(this.usuario.nombre, this.usuario.email, this.usuario.consentimiento);
+        this.userId = user ? user.id : null;
         window.BioScanAPI.notificarRDStation({
           identificador: "bioscan-5d-registro-inicial",
-          email: this.usuario.email,
-          name: this.usuario.nombre,
-          tags: "bioscan-completado"
+          email: this.usuario.email, name: this.usuario.nombre, tags: "bioscan-completado"
         });
-
-        // 3. Avanzar a preparacion
         this.cargando = false;
         this.estado = "preparacion";
       } catch (e) {
@@ -115,223 +94,186 @@ function bioscanApp() {
       }
     },
 
-    empezarCuestionario() {
-      this.estado = "cuestionario";
-      this.indiceActual = 0;
-    },
+    empezarCuestionario() { this.estado = "cuestionario"; this.indiceActual = 0; },
 
-    // ---------- RESPONDER PREGUNTAS ----------
-    seleccionar(indiceOpcion) {
+    // ---------- RESPONDER ----------
+    seleccionar(idx) {
       const p = this.preguntaActual;
       if (p.tipo === "multi") {
-        this.toggleReto(indiceOpcion);
+        if (p.id === "p2") this.toggleTension(idx);
+        else if (p.id === "p12") this.toggleReto(idx);
       } else {
-        this.respuestas[p.id] = indiceOpcion;
+        this.respuestas[p.id] = idx;
       }
     },
-
-    estaSeleccionada(indiceOpcion) {
+    estaSel(idx) {
       const p = this.preguntaActual;
-      if (p.tipo === "multi") {
-        const reto = p.opciones[indiceOpcion].reto;
-        return this.retosSeleccionados.includes(reto);
-      }
-      return this.respuestas[p.id] === indiceOpcion;
+      if (p.id === "p2") return this.tensiones.includes(idx);
+      if (p.id === "p12") return this.retosSeleccionados.includes(idx);
+      return this.respuestas[p.id] === idx;
     },
-
-    toggleReto(indiceOpcion) {
-      const reto = this.preguntaActual.opciones[indiceOpcion].reto;
-      const idx = this.retosSeleccionados.indexOf(reto);
-      if (idx >= 0) {
-        this.retosSeleccionados.splice(idx, 1);
-      } else {
-        const max = this.preguntaActual.maxSelecciones || 3;
-        if (this.retosSeleccionados.length < max) {
-          this.retosSeleccionados.push(reto);
-        }
-      }
+    toggleTension(idx) {
+      const p = this.preguntaActual;
+      // opcion exclusiva "no siento tension"
+      if (idx === p.exclusiva) { this.tensiones = this.tensiones.includes(idx) ? [] : [idx]; return; }
+      // si habia exclusiva marcada, quitarla
+      this.tensiones = this.tensiones.filter(t => t !== p.exclusiva);
+      const i = this.tensiones.indexOf(idx);
+      if (i >= 0) this.tensiones.splice(i, 1);
+      else if (this.tensiones.length < p.maxSel) this.tensiones.push(idx);
+    },
+    toggleReto(idx) {
+      const i = this.retosSeleccionados.indexOf(idx);
+      if (i >= 0) this.retosSeleccionados.splice(i, 1);
+      else if (this.retosSeleccionados.length < this.preguntaActual.maxSel) this.retosSeleccionados.push(idx);
     },
 
     siguiente() {
       if (!this.puedeAvanzar) return;
-
-      if (this.esUltimaPregunta) {
-        this.calcular();
-        return;
-      }
-
-      // Detectar cambio de bloque para mostrar transicion
-      const bloqueActual = this.preguntaActual.bloque;
-      const bloqueSiguiente = this.preguntas[this.indiceActual + 1].bloque;
-
-      if (bloqueActual !== bloqueSiguiente) {
-        this.mostrarTransicionBloque(bloqueSiguiente);
-      } else {
-        this.indiceActual++;
-      }
+      if (this.esUltima) { this.irARevision(); return; }
+      const actual = this.preguntaActual.bloque;
+      const sig = this.preguntas[this.indiceActual + 1].bloque;
+      if (actual !== sig) this.lanzarTransicion(sig);
+      else this.indiceActual++;
     },
+    anterior() { if (this.indiceActual > 0) this.indiceActual--; },
 
-    anterior() {
-      if (this.indiceActual > 0) this.indiceActual--;
-    },
-
-    mostrarTransicionBloque(nuevoBloque) {
-      const textos = {
-        "REGULACIÓN BAJO PRESIÓN": "Hasta aquí hablamos de tu postura cotidiana. Ahora exploremos cómo responde tu cuerpo bajo presión.",
-        "INFLUENCIA NO VERBAL": "Ahora veamos qué pasa cuando interactúas con otros. Tu cuerpo comunica antes que tus palabras.",
-        "CONSCIENCIA CORPORAL": "Casi listo. Las últimas preguntas miden algo invisible pero crítico: tu consciencia corporal.",
-        "CONTEXTO": "Una última pregunta. Esta define tu trayectoria personal de los próximos 30 días."
-      };
-      this.textoTransicion = textos[nuevoBloque] || "";
+    lanzarTransicion(nuevoBloque) {
+      const map = { "REGULACION": "bloque2", "INFLUENCIA": "bloque3", "CONSCIENCIA": "bloque4", "RETO": "bloque5" };
+      this.transicionData = this.UI.transiciones[map[nuevoBloque]];
       this.mostrarTransicion = true;
-      setTimeout(() => {
-        this.mostrarTransicion = false;
-        this.indiceActual++;
-      }, 2600);
+    },
+    continuarTransicion() {
+      this.mostrarTransicion = false;
+      this.indiceActual++;
+    },
+
+    // ---------- REVISION PREVIA (A3) ----------
+    irARevision() { this.estado = "revision"; },
+    textoRespuesta(p) {
+      if (p.id === "p2") {
+        if (this.tensiones.length === 0) return "—";
+        return this.tensiones.map(i => p.opciones[i]).join(", ");
+      }
+      if (p.id === "p12") {
+        if (this.retosSeleccionados.length === 0) return "—";
+        return this.retosSeleccionados.map(i => p.opciones[i]).join(", ");
+      }
+      const idx = this.respuestas[p.id];
+      return idx !== undefined ? p.opciones[idx] : "—";
+    },
+    editarPregunta(indice) {
+      this.estado = "cuestionario";
+      this.indiceActual = indice;
+      this.modoRevisionEdit = true;
     },
 
     // ---------- CALCULO ----------
     async calcular() {
       this.estado = "calculo";
       this.animarCalculo();
-
       try {
-        // 1. Llamar al algoritmo protegido (Netlify Function)
-        const resultado = await window.BioScanAPI.calcularPerfil(
-          this.respuestas,
-          this.retosSeleccionados
-        );
+        const resultado = await window.BioScanAPI.calcularPerfil(this.respuestas, this.retosReales(), this.tensiones);
         this.resultado = resultado;
-
-        // 2. Resolver datos de los perfiles para mostrar
         this.perfilActualData = this.perfiles[resultado.perfil_actual];
-        const destinoKey = resultado.perfil_destino.replace("_PLUS", "");
-        this.perfilDestinoData = this.perfiles[destinoKey];
+        this.perfilDestinoData = this.perfiles[resultado.perfil_destino];
 
-        // 3. Guardar diagnostico en Supabase
         if (this.userId) {
-          await window.BioScanAPI.guardarDiagnostico(
-            this.userId,
-            this.respuestas,
-            this.retosSeleccionados,
-            resultado
-          );
+          await window.BioScanAPI.guardarDiagnostico(this.userId, { respuestas: this.respuestas, tensiones: this.tensiones }, this.retosReales(), resultado);
         }
 
-        // 4. Generar PDF
         const pdf = await window.PDFGenerator.generar({
           nombre: this.usuario.nombre,
           perfilActual: resultado.perfil_actual,
           perfilDestino: resultado.perfil_destino,
+          esMaestria: resultado.es_maestria,
           scores: resultado.scores
         });
 
-        // 5. Notificar a RD Station (diagnostico completado, con identificador por destino)
-        const destinoLower = destinoKey.toLowerCase();
-        const idDestino = resultado.necesita_plus
+        const destinoLower = resultado.perfil_destino.toLowerCase();
+        const idDestino = resultado.es_maestria
           ? `bioscan-5d-completado-${resultado.perfil_actual.toLowerCase()}-plus`
           : `bioscan-5d-completado-${destinoLower}`;
-
         window.BioScanAPI.notificarRDStation({
-          identificador: idDestino,
-          email: this.usuario.email,
-          name: this.usuario.nombre,
+          identificador: idDestino, email: this.usuario.email, name: this.usuario.nombre,
           tags: `bioscan-completado,bioscan-perfil-${resultado.perfil_actual.toLowerCase()},bioscan-destino-${destinoLower}`,
-          cf_perfil_actual: resultado.perfil_actual,
-          cf_perfil_destino: resultado.perfil_destino,
-          pdf_base64: pdf.base64
+          cf_perfil_actual: resultado.perfil_actual, cf_perfil_destino: resultado.perfil_destino,
+          pdf_base64: pdf ? pdf.base64 : ""
         });
 
-        // 6. Esperar a que termine la animacion y mostrar resultado
-        setTimeout(() => {
-          this.estado = "resultado";
-        }, 4500);
+        setTimeout(() => { this.estado = "resultado"; }, 4400);
       } catch (e) {
         this.error = "Hubo un problema al calcular tu perfil. Intenta de nuevo.";
         console.error(e);
-        setTimeout(() => { this.estado = "cuestionario"; }, 2000);
+        setTimeout(() => { this.estado = "revision"; }, 1800);
       }
     },
-
+    retosReales() {
+      const p12 = this.preguntas.find(p => p.id === "p12");
+      return this.retosSeleccionados.map(i => p12.retos[i]);
+    },
     animarCalculo() {
-      const textos = [
-        "Mapeando tu Presencia Somática...",
-        "Calculando tu Regulación bajo presión...",
-        "Detectando tu patrón de Influencia no verbal...",
-        "Midiendo tu Consciencia corporal...",
-        "Cruzando tus retos con tu trayectoria..."
-      ];
-      let i = 0;
-      this.textoCalculo = textos[0];
-      const intervalo = setInterval(() => {
+      const textos = this.UI.calculo.textos;
+      let i = 0; this.textoCalculo = textos[0];
+      const intv = setInterval(() => {
         i++;
-        if (i >= textos.length) {
-          clearInterval(intervalo);
-          this.textoCalculo = "Tu Modo Postural ha sido identificado.";
-          return;
-        }
+        if (i >= textos.length) { clearInterval(intv); this.textoCalculo = this.UI.calculo.final; return; }
         this.textoCalculo = textos[i];
-      }, 800);
+      }, 780);
     },
 
-    // ---------- RESULTADO: dibujar radar ----------
+    // ---------- RESULTADO ----------
+    get accentColor() { return this.perfilActualData ? this.perfilActualData.color : "#D13F26"; },
     dibujarRadar() {
       const ctx = document.getElementById("radarChart");
-      if (!ctx || !this.resultado) return;
-
+      if (!ctx || !this.resultado || !window.Chart) return;
+      const c = this.accentColor;
       new window.Chart(ctx, {
         type: "radar",
         data: {
           labels: ["Presencia", "Regulación", "Influencia", "Consciencia"],
           datasets: [{
             label: "Tu huella · Día 0",
-            data: [
-              this.resultado.scores.eje1,
-              this.resultado.scores.eje2,
-              this.resultado.scores.eje3,
-              this.resultado.scores.eje4
-            ],
-            backgroundColor: "rgba(209, 63, 38, 0.25)",
-            borderColor: "rgba(209, 63, 38, 1)",
-            borderWidth: 2,
-            pointBackgroundColor: "#D3AE37"
+            data: [this.resultado.scores.eje1, this.resultado.scores.eje2, this.resultado.scores.eje3, this.resultado.scores.eje4],
+            backgroundColor: this.hexToRgba(c, 0.22), borderColor: c, borderWidth: 2, pointBackgroundColor: "#D3AE37", pointRadius: 3
           }]
         },
         options: {
-          responsive: true,
-          plugins: { legend: { labels: { color: "#aaa" } } },
-          scales: {
-            r: {
-              beginAtZero: true, max: 10,
-              ticks: { stepSize: 2, color: "#666", backdropColor: "transparent" },
-              grid: { color: "rgba(255,255,255,0.1)" },
-              angleLines: { color: "rgba(255,255,255,0.1)" },
-              pointLabels: { color: "#ccc", font: { size: 12 } }
-            }
-          }
+          responsive: true, plugins: { legend: { labels: { color: "#C8C8CC", font: { size: 11 } } } },
+          scales: { r: {
+            beginAtZero: true, max: 10, ticks: { stepSize: 2, color: "#777", backdropColor: "transparent", font: { size: 9 } },
+            grid: { color: "rgba(255,255,255,0.1)" }, angleLines: { color: "rgba(255,255,255,0.1)" },
+            pointLabels: { color: "#E0E0E0", font: { size: 11.5 } }
+          } }
         }
       });
     },
-
-    // ---------- CTA segun fecha y URL del Umbral ----------
-    irAlUmbral() {
-      window.open(window.BIOSCAN_CONFIG.URL_UMBRAL, "_blank");
-    },
-
+    irAlUmbral() { window.open(window.BIOSCAN_CONFIG.URL_UMBRAL, "_blank"); },
     descargarPDF() {
       window.PDFGenerator.descargar({
-        nombre: this.usuario.nombre,
-        perfilActual: this.resultado.perfil_actual,
-        perfilDestino: this.resultado.perfil_destino,
-        scores: this.resultado.scores
+        nombre: this.usuario.nombre, perfilActual: this.resultado.perfil_actual,
+        perfilDestino: this.resultado.perfil_destino, esMaestria: this.resultado.es_maestria, scores: this.resultado.scores
       });
     },
+    puedeRepetir() { return this.vecesRepetido < 1; },
+    repetirBioScan() {
+      if (!this.puedeRepetir()) return;
+      this.vecesRepetido++;
+      this.respuestas = {}; this.tensiones = []; this.retosSeleccionados = [];
+      this.resultado = null; this.indiceActual = 0; this.estado = "cuestionario";
+    },
 
-    // ---------- UTILIDADES ----------
-    validarEmail(email) {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    // ---------- UTILES ----------
+    iconoSVG(nombre) {
+      return (window.BIOSCAN_ICONOS && window.BIOSCAN_ICONOS[nombre]) || "";
+    },
+    validarEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); },
+    hexToRgba(hex, a) {
+      const n = hex.replace("#", "");
+      const r = parseInt(n.substring(0,2),16), g = parseInt(n.substring(2,4),16), b = parseInt(n.substring(4,6),16);
+      return `rgba(${r},${g},${b},${a})`;
     }
   };
 }
-
 window.bioscanApp = bioscanApp;
+

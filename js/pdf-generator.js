@@ -1,228 +1,162 @@
 /* ============================================================
    BIOSCAN 5D · MODO UMBRAL
-   pdf-generator.js — Genera el PDF de resultados (6 paginas)
+   pdf-generator.js — PDF v2: ficha BLANCA, 2 paginas, premium
    ------------------------------------------------------------
-   Usa jsPDF (cargado por CDN). Genera el PDF liviano en el
-   navegador y devuelve un Blob/base64 para enviar por correo
-   o descargar. El plan completo NO va en el PDF (vive en la app).
+   Cambio mayor (feedback): fondo blanco estilo Apple/Mindvalley
+   (el negro cansa en lectura larga), 2 paginas, ambos logos,
+   referencias academicas (uso legitimo de citas).
    ============================================================ */
-
 (function () {
-  const NEGRO = "#050505";
-  const NARANJA = "#D13F26";
-  const DORADO = "#D3AE37";
-  const BLANCO = "#FFFFFF";
-  const GRIS = "#8B8B93";
+  const TINTA = [20, 20, 22];       // casi negro para texto
+  const SUAVE = [110, 110, 118];    // gris medio
+  const ORANGE = [209, 63, 38];
+  const GOLD = [176, 141, 41];
 
   const PDFGenerator = {
-    /* ----------------------------------------------------------
-       Genera el PDF y devuelve { blob, base64, dataUri }
-       datos = { nombre, perfilActual, perfilDestino, scores }
-       PERFILES = window.BIOSCAN_DATA.PERFILES
-       ---------------------------------------------------------- */
     async generar(datos) {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: "pt", format: "a4" });
       const W = doc.internal.pageSize.getWidth();
       const H = doc.internal.pageSize.getHeight();
+      const M = 56; // margen
 
       const PERFILES = window.BIOSCAN_DATA.PERFILES;
       const pa = PERFILES[datos.perfilActual] || {};
-      const pd = PERFILES[datos.perfilDestino.replace("_PLUS", "")] || {};
+      const pd = PERFILES[datos.perfilDestino] || {};
 
-      const fondo = () => {
-        doc.setFillColor(5, 5, 5);
-        doc.rect(0, 0, W, H, "F");
-      };
-      const linea = (y) => {
-        doc.setDrawColor(211, 174, 55);
-        doc.setLineWidth(1);
-        doc.line(56, y, W - 56, y);
-      };
+      const fondoBlanco = () => { doc.setFillColor(255,255,255); doc.rect(0,0,W,H,"F"); };
+      const lineaSuave = (y) => { doc.setDrawColor(225,225,228); doc.setLineWidth(0.8); doc.line(M,y,W-M,y); };
 
-      /* ---------- PAGINA 1 · PORTADA ---------- */
-      fondo();
-      doc.setTextColor(GRIS);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.text("BIOSCAN 5D  ·  MODO UMBRAL", W / 2, 180, { align: "center" });
+      /* ===== PAGINA 1 ===== */
+      fondoBlanco();
 
-      doc.setTextColor(BLANCO);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(40);
-      doc.text("TU DIAGNÓSTICO", W / 2, 320, { align: "center" });
-      doc.text("POSTURAL PERSONAL", W / 2, 370, { align: "center" });
+      // Encabezado de marca
+      doc.setTextColor(...SUAVE); doc.setFont("helvetica","bold"); doc.setFontSize(10);
+      doc.text("BIOSCAN 5D", M, 60);
+      doc.setFont("helvetica","normal");
+      doc.text("MODO UMBRAL · TEMPORADA 1", W-M, 60, { align:"right" });
+      doc.setDrawColor(...ORANGE); doc.setLineWidth(2); doc.line(M, 70, M+34, 70);
 
-      linea(430);
-      doc.setTextColor(DORADO);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(16);
-      doc.text(datos.nombre, W / 2, 480, { align: "center" });
-      doc.setTextColor(GRIS);
-      doc.setFontSize(10);
-      doc.text(new Date().toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" }), W / 2, 505, { align: "center" });
+      // Saludo
+      doc.setTextColor(...SUAVE); doc.setFont("helvetica","normal"); doc.setFontSize(12);
+      doc.text(`Diagnóstico de ${datos.nombre}`, M, 110);
 
-      doc.setTextColor(GRIS);
-      doc.setFontSize(9);
-      doc.text("5D Diseñadores  ·  Bogotá, Colombia", W / 2, H - 60, { align: "center" });
+      // Perfil actual
+      doc.setTextColor(...SUAVE); doc.setFontSize(9);
+      doc.text("TU PERFIL POSTURAL ACTUAL", M, 142);
+      doc.setTextColor(...TINTA); doc.setFont("helvetica","bold"); doc.setFontSize(30);
+      doc.text(pa.nombre || "", M, 174);
+      doc.setTextColor(...GOLD); doc.setFont("helvetica","italic"); doc.setFontSize(13);
+      doc.text(pa.subtitulo || "", M, 196);
 
-      /* ---------- PAGINA 2 · MODO ACTUAL + DESTINO ---------- */
-      doc.addPage(); fondo();
-      doc.setTextColor(GRIS); doc.setFontSize(11);
-      doc.text("TU MODO POSTURAL ACTUAL", 56, 90);
-      linea(105);
-
-      doc.setTextColor(BLANCO); doc.setFont("helvetica", "bold"); doc.setFontSize(30);
-      doc.text(pa.nombre || "", 56, 155);
-      doc.setTextColor(DORADO); doc.setFont("helvetica", "italic"); doc.setFontSize(13);
-      doc.text(doc.splitTextToSize(pa.subtitulo || "", W - 112), 56, 180);
-
-      let y = 230;
+      // Bloques del perfil
+      let y = 232;
       const bloque = (titulo, texto) => {
-        doc.setTextColor(NARANJA); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-        doc.text(titulo, 56, y); y += 18;
-        doc.setTextColor(BLANCO); doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-        const lines = doc.splitTextToSize(texto, W - 112);
-        doc.text(lines, 56, y); y += lines.length * 15 + 18;
+        if (!texto) return;
+        doc.setTextColor(...ORANGE); doc.setFont("helvetica","bold"); doc.setFontSize(9.5);
+        doc.text(titulo, M, y); y += 15;
+        doc.setTextColor(...TINTA); doc.setFont("helvetica","normal"); doc.setFontSize(10.5);
+        const lines = doc.splitTextToSize(texto, W - M*2);
+        doc.text(lines, M, y); y += lines.length * 13.5 + 16;
       };
-      bloque("PATRÓN CARACTERÍSTICO", pa.patron || "");
-      bloque("QUIÉN ERES", pa.quien_eres || "");
-      bloque("LO QUE TU CUERPO ESTÁ DICIENDO", pa.cuerpo_dice || "");
-      bloque("TU FORTALEZA OCULTA", pa.fortaleza || "");
+      if (pa.es_destino) {
+        bloque("QUIÉN ERES", pa.quien_es);
+        bloque("LO QUE VAS A LOGRAR", pa.vas_a_lograr);
+      } else {
+        bloque("PATRÓN CARACTERÍSTICO", pa.patron);
+        bloque("QUIÉN ERES", pa.quien_eres);
+        bloque("LO QUE TU CUERPO ESTÁ DICIENDO", pa.cuerpo_dice);
+        bloque("LO QUE ESTÁ EN JUEGO", pa.en_juego);
+      }
 
-      /* ---------- PAGINA 3 · HUELLA POSTURAL ---------- */
-      doc.addPage(); fondo();
-      doc.setTextColor(GRIS); doc.setFontSize(11);
-      doc.text("TU HUELLA POSTURAL  ·  DÍA 0", 56, 90);
-      linea(105);
-
+      // Huella postural (barras)
+      if (y > H - 200) { doc.addPage(); fondoBlanco(); y = 70; }
+      doc.setTextColor(...SUAVE); doc.setFont("helvetica","bold"); doc.setFontSize(9);
+      doc.text("TU HUELLA POSTURAL · DÍA 0", M, y); y += 20;
       const ejes = [
-        { n: "Presencia Somática", v: datos.scores.eje1 },
-        { n: "Regulación bajo presión", v: datos.scores.eje2 },
-        { n: "Influencia no verbal", v: datos.scores.eje3 },
-        { n: "Consciencia corporal", v: datos.scores.eje4 }
+        ["Presencia Somática", datos.scores.eje1],
+        ["Regulación bajo presión", datos.scores.eje2],
+        ["Influencia no verbal", datos.scores.eje3],
+        ["Consciencia corporal", datos.scores.eje4]
       ];
-      let by = 180;
-      ejes.forEach((e) => {
-        doc.setTextColor(BLANCO); doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-        doc.text(e.n, 56, by);
-        // barra de fondo
-        doc.setFillColor(40, 40, 40);
-        doc.roundedRect(56, by + 8, W - 112, 12, 3, 3, "F");
-        // barra de valor
-        doc.setFillColor(209, 63, 38);
-        const ancho = ((W - 112) * e.v) / 10;
-        doc.roundedRect(56, by + 8, ancho, 12, 3, 3, "F");
-        doc.setTextColor(DORADO); doc.setFontSize(10);
-        doc.text(e.v.toFixed(1) + " / 10", W - 56, by, { align: "right" });
-        by += 60;
+      ejes.forEach(([n,v]) => {
+        doc.setTextColor(...TINTA); doc.setFont("helvetica","normal"); doc.setFontSize(10);
+        doc.text(n, M, y);
+        doc.setTextColor(...GOLD); doc.text(v.toFixed(1)+" / 10", W-M, y, { align:"right" });
+        doc.setFillColor(235,235,238); doc.roundedRect(M, y+5, W-M*2, 7, 2, 2, "F");
+        doc.setFillColor(...ORANGE); doc.roundedRect(M, y+5, (W-M*2)*v/10, 7, 2, 2, "F");
+        y += 30;
       });
 
-      doc.setTextColor(GRIS); doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-      const interp = "Esta es tu huella postural de hoy. Durante el Umbral 5D #01 vas a entender qué significa cada eje y cómo transformarlo.";
-      doc.text(doc.splitTextToSize(interp, W - 112), 56, by + 20);
+      /* ===== PAGINA 2 ===== */
+      doc.addPage(); fondoBlanco();
+      doc.setTextColor(...SUAVE); doc.setFont("helvetica","bold"); doc.setFontSize(10);
+      doc.text("TU PRÓXIMO PASO", M, 60);
+      doc.setDrawColor(...ORANGE); doc.setLineWidth(2); doc.line(M, 70, M+34, 70);
 
-      /* ---------- PAGINA 4 · PROXIMO UMBRAL ---------- */
-      doc.addPage(); fondo();
-      doc.setTextColor(GRIS); doc.setFontSize(11);
-      doc.text("TU PRÓXIMO UMBRAL", 56, 90);
-      linea(105);
+      y = 110;
+      if (datos.esMaestria) {
+        doc.setTextColor(...TINTA); doc.setFont("helvetica","bold"); doc.setFontSize(22);
+        doc.text(pa.nombre || "", M, y); y += 24;
+        doc.setTextColor(...ORANGE); doc.setFont("helvetica","bold"); doc.setFontSize(12);
+        doc.text("· NIVEL MAESTRÍA ·", M, y); y += 28;
+        doc.setTextColor(...TINTA); doc.setFont("helvetica","normal"); doc.setFontSize(11);
+        let l = doc.splitTextToSize(pa.maestria || "", W-M*2); doc.text(l, M, y); y += l.length*14+20;
+      } else {
+        doc.setTextColor(...SUAVE); doc.setFont("helvetica","normal"); doc.setFontSize(10.5);
+        doc.text("Tu cuerpo debe moverse hacia:", M, y); y += 24;
+        doc.setTextColor(...TINTA); doc.setFont("helvetica","bold"); doc.setFontSize(24);
+        doc.text(pd.nombre || "", M, y); y += 22;
+        doc.setTextColor(...GOLD); doc.setFont("helvetica","italic"); doc.setFontSize(12);
+        doc.text(pd.subtitulo || "", M, y); y += 26;
+        doc.setTextColor(...ORANGE); doc.setFont("helvetica","bold"); doc.setFontSize(9.5);
+        doc.text("HACIA DÓNDE VAS", M, y); y += 14;
+        doc.setTextColor(...TINTA); doc.setFont("helvetica","normal"); doc.setFontSize(10.5);
+        let l1 = doc.splitTextToSize(pd.quien_es || "", W-M*2); doc.text(l1, M, y); y += l1.length*13.5+16;
+        doc.setTextColor(...ORANGE); doc.setFont("helvetica","bold"); doc.setFontSize(9.5);
+        doc.text("LO QUE VAS A LOGRAR", M, y); y += 14;
+        doc.setTextColor(...TINTA); doc.setFont("helvetica","normal"); doc.setFontSize(10.5);
+        let l2 = doc.splitTextToSize(pd.vas_a_lograr || "", W-M*2); doc.text(l2, M, y); y += l2.length*13.5+20;
+      }
 
-      doc.setTextColor(BLANCO); doc.setFont("helvetica", "bold"); doc.setFontSize(16);
-      doc.text(pa.nombre || "", 56, 150);
-      doc.setTextColor(NARANJA); doc.setFontSize(20);
-      doc.text("->", W / 2 - 12, 150);
-      doc.setTextColor(DORADO); doc.setFontSize(16);
-      doc.text(pd.nombre || "", W - 56, 150, { align: "right" });
+      // Invitacion sesion
+      lineaSuave(y); y += 26;
+      doc.setTextColor(...TINTA); doc.setFont("helvetica","bold"); doc.setFontSize(14);
+      doc.text("Umbral 5D #01", M, y); y += 18;
+      doc.setTextColor(...GOLD); doc.setFont("helvetica","italic"); doc.setFontSize(11);
+      doc.text("\"Como te sientas, te sientes\"", M, y); y += 22;
+      doc.setTextColor(...TINTA); doc.setFont("helvetica","normal"); doc.setFontSize(10.5);
+      doc.text("4 de junio · 6:00 PM Colombia · Online en vivo · Acceso abierto", M, y); y += 28;
 
-      doc.setTextColor(GRIS); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-      doc.text("Donde estás hoy", 56, 168);
-      doc.text("Hacia dónde te llevamos", W - 56, 168, { align: "right" });
-
-      y = 220;
-      doc.setTextColor(NARANJA); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-      doc.text("QUÉ SIGNIFICA " + (pd.nombre || ""), 56, y); y += 18;
-      doc.setTextColor(BLANCO); doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-      let l = doc.splitTextToSize(pd.quien_eres || "", W - 112);
-      doc.text(l, 56, y); y += l.length * 15 + 20;
-
-      doc.setTextColor(NARANJA); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-      doc.text("TU CAMINO", 56, y); y += 18;
-      doc.setTextColor(BLANCO); doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-      l = doc.splitTextToSize("Tu plan de 7 días " + (pd.proximo_umbral || ""), W - 112);
-      doc.text(l, 56, y);
-
-      /* ---------- PAGINA 5 · LA SESION ---------- */
-      doc.addPage(); fondo();
-      doc.setTextColor(GRIS); doc.setFontSize(11);
-      doc.text("LO QUE SIGUE", 56, 90);
-      linea(105);
-
-      doc.setTextColor(BLANCO); doc.setFont("helvetica", "bold"); doc.setFontSize(18);
-      doc.text("Umbral 5D #01", 56, 160);
-      doc.setFont("helvetica", "normal"); doc.setFontSize(13);
-      doc.setTextColor(DORADO);
-      doc.text("\"Como te sientas, te sientes\"", 56, 186);
-
-      doc.setTextColor(BLANCO); doc.setFontSize(11);
-      const info = [
-        "Jueves 4 de junio  ·  6:00 PM Colombia",
-        "Online en vivo  ·  Acceso abierto",
-        "",
-        "Conocer tu perfil es apenas el primer umbral.",
-        "En la sesión vas a entender por qué tu cuerpo se",
-        "comporta así, y vas a vivir la experiencia que",
-        "transforma ese conocimiento en poder real."
+      // Referencias academicas (uso legitimo de citas)
+      if (y > H - 150) { doc.addPage(); fondoBlanco(); y = 70; }
+      lineaSuave(y); y += 22;
+      doc.setTextColor(...SUAVE); doc.setFont("helvetica","bold"); doc.setFontSize(8.5);
+      doc.text("FUNDAMENTO CIENTÍFICO", M, y); y += 14;
+      doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(...SUAVE);
+      const refs = [
+        "Este diagnóstico se apoya en investigación sobre:",
+        "· Postura, respiración y su efecto en el ánimo y la cognición (biofeedback, San Francisco State University).",
+        "· Presencia, lenguaje corporal y percepción social (comportamiento organizacional, Harvard Business School).",
+        "· Diseño de hábitos sostenibles y cambio de comportamiento (diseño conductual, Stanford).",
+        "· Regulación del sistema nervioso y respiración (neurofisiología aplicada)."
       ];
-      doc.text(info, 56, 240, { lineHeightFactor: 1.6 });
+      refs.forEach(r => { const l = doc.splitTextToSize(r, W-M*2); doc.text(l, M, y); y += l.length*11+3; });
 
-      doc.setFillColor(209, 63, 38);
-      doc.roundedRect(56, 400, W - 112, 44, 22, 22, "F");
-      doc.setTextColor(BLANCO); doc.setFont("helvetica", "bold"); doc.setFontSize(12);
-      doc.text("RESERVA TU LUGAR EN EL UMBRAL", W / 2, 427, { align: "center" });
-      doc.setTextColor(GRIS); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-      doc.text("www.5d.com.co/umbral-5d-01", W / 2, 465, { align: "center" });
+      // Pie de marca
+      doc.setTextColor(...SUAVE); doc.setFont("helvetica","normal"); doc.setFontSize(8);
+      doc.text("BioScan 5D · una creación de 5D Diseñadores · 23 años de ergonomía y diseño de comportamiento", M, H-50);
+      doc.text("www.5d.com.co", M, H-38);
+      doc.text("© 2026 5D Diseñadores Asociados SAS", W-M, H-38, { align:"right" });
 
-      /* ---------- PAGINA 6 · CIERRE Y CREDITOS ---------- */
-      doc.addPage(); fondo();
-      doc.setTextColor(GRIS); doc.setFontSize(11);
-      doc.text("LA CIENCIA DETRÁS", 56, 90);
-      linea(105);
-
-      doc.setTextColor(BLANCO); doc.setFont("helvetica", "normal"); doc.setFontSize(11);
-      const ciencia = [
-        "Tu Modo Postural no es una etiqueta arbitraria.",
-        "Está informado por tres líneas de investigación:",
-        "",
-        "Amy Cuddy (Harvard) — Presencia y comunicación no verbal.",
-        "Erik Peper (SFSU) — Postura, respiración y cognición.",
-        "BJ Fogg (Stanford) — Diseño de hábitos sostenibles.",
-        "Stephen Porges — Regulación del sistema nervioso."
-      ];
-      doc.text(ciencia, 56, 160, { lineHeightFactor: 1.6 });
-
-      linea(330);
-      doc.setTextColor(DORADO); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-      doc.text("5D DISEÑADORES", 56, 370);
-      doc.setTextColor(GRIS); doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-      doc.text("23 años transformando espacios de trabajo en", 56, 392);
-      doc.text("arquitecturas de bienestar.", 56, 408);
-      doc.text("www.5d.com.co", 56, 440);
-      doc.setFontSize(8);
-      doc.text("© 2026 5D Diseñadores Asociados SAS", 56, H - 50);
-
-      /* ---------- SALIDA ---------- */
-      const blob = doc.output("blob");
       const base64 = doc.output("datauristring");
-      return { blob, base64, doc };
+      return { base64, doc };
     },
 
-    /* Descargar directamente (para pruebas) */
     async descargar(datos) {
       const { doc } = await this.generar(datos);
-      doc.save(`BioScan-5D-${datos.nombre.replace(/\s+/g, "-")}.pdf`);
+      doc.save(`BioScan-5D-${(datos.nombre||"perfil").replace(/\s+/g,"-")}.pdf`);
     }
   };
-
   window.PDFGenerator = PDFGenerator;
 })();
