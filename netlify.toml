@@ -1,14 +1,12 @@
 # ============================================================
-# BIOSCAN 5D · MODO UMBRAL
-# netlify.toml — Configuracion de despliegue
+# BIOSCAN 5D · MODO UMBRAL — netlify.toml
 # ============================================================
 
 [build]
-  # No usamos build step (sitio estatico). Publicamos la raiz.
   publish = "."
   functions = "netlify/functions"
 
-# Redireccion para que las funciones sean accesibles
+# Endpoints publicos (mas limpios que /.netlify/functions/...)
 [[redirects]]
   from = "/api/calcular-perfil"
   to = "/.netlify/functions/calcular-perfil"
@@ -19,6 +17,12 @@
   to = "/.netlify/functions/enviar-rdstation"
   status = 200
 
+# Webhook publico para Hotmart (esta es la URL que se registra en Hotmart)
+[[redirects]]
+  from = "/api/webhook-hotmart"
+  to = "/.netlify/functions/webhook-hotmart"
+  status = 200
+
 # Headers de seguridad basicos
 [[headers]]
   for = "/*"
@@ -26,3 +30,4 @@
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+
