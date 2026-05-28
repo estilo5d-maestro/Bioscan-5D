@@ -85,7 +85,7 @@ function bioscanApp() {
         this.userId = r ? r.id : null;
         window.BioScanAPI.notificarRDStation({
           identificador: "bioscan-5d-registro-inicial",
-          email: this.usuario.email, name: this.usuario.nombre, tags: "bioscan-completado"
+          email: this.usuario.email, name: this.usuario.nombre, tags: "bioscan-iniciado"
         });
         this.cargando = false;
         this.estado = "preparacion";
@@ -205,8 +205,7 @@ function bioscanApp() {
         window.BioScanAPI.notificarRDStation({
           identificador: idDestino, email: this.usuario.email, name: this.usuario.nombre,
           tags: `bioscan-completado,bioscan-perfil-${res.perfil_actual.toLowerCase()},bioscan-destino-${destinoLower}`,
-          cf_perfil_actual: res.perfil_actual, cf_perfil_destino: res.perfil_destino,
-          pdf_base64: pdf ? pdf.base64 : ""
+          cf_perfil_actual: res.perfil_actual, cf_perfil_destino: res.perfil_destino        
         });
         setTimeout(() => { this.estado = "resultado"; }, 4400);
       } catch (e) {
