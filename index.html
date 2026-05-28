@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#050505">
   <title>BioScan 5D · Modo Umbral</title>
-  <link rel="stylesheet" href="/css/bioscan.css">
+  <link rel="stylesheet" href="/css/bioscan.css?v=4">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -21,28 +21,69 @@
 
       <div class="app-content" x-data="bioscanApp()" x-init="init()" x-cloak>
 
-        <!-- ===== ORBE (reposicionado, estados segun pantalla) ===== -->
-        <div class="orb-container" :class="{compact: estado==='cuestionario' || estado==='revision'}"
-             x-show="estado!=='transicion'">
+        <!-- ===== ORBE + ANILLO NEÓN (filtros SVG nativos, glow real en iOS) ===== -->
+        <div class="orb-container" :class="{compact: estado==='cuestionario' || estado==='revision'}">
+          <!-- Núcleo dorado palpitante (NO cambia entre estados) -->
           <div class="orb-core"><div class="orb-spark"></div></div>
-          <svg class="progress-ring" :width="(estado==='cuestionario'||estado==='revision')?98:124"
-               :height="(estado==='cuestionario'||estado==='revision')?98:124"
-               :viewBox="(estado==='cuestionario'||estado==='revision')?'0 0 98 98':'0 0 124 124'">
-            <template x-if="estado==='cuestionario'">
-              <g>
-                <circle class="ring-track" :r="45" :cx="49" :cy="49"></circle>
-                <circle class="ring-fill" :r="45" :cx="49" :cy="49"
-                  :stroke-dasharray="283" :stroke-dashoffset="283 - (283 * progresoRing/100)"></circle>
+
+          <!-- SVG del anillo. viewBox fijo 132; r=58, circunferencia=364.4 -->
+          <svg class="ring-svg" width="132" height="132" viewBox="0 0 132 132">
+            <defs>
+              <!-- Gradiente naranja corporativo (marca BioScan) -->
+              <linearGradient id="gradNaranja" x1="0" y1="0" x2="132" y2="132" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#EF5036"/><stop offset="1" stop-color="#D13F26"/>
+              </linearGradient>
+              <!-- Gradiente naranja + dorado (para el cálculo) -->
+              <linearGradient id="gradMixto" x1="0" y1="0" x2="132" y2="132" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#EF5036"/><stop offset="0.55" stop-color="#D13F26"/><stop offset="1" stop-color="#C9A227"/>
+              </linearGradient>
+              <!-- Filtro de glow NEÓN real (iOS respeta feGaussianBlur) -->
+              <filter id="glowNeon" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="3.2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="glowSoft" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+
+            <!-- Track base (siempre visible, tenue) -->
+            <circle cx="66" cy="66" r="58" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3"/>
+
+            <!-- CUESTIONARIO: anillo se enciende progresivamente (naranja neón) -->
+            <template x-if="estado==='cuestionario'||estado==='revision'">
+              <g transform="rotate(-90 66 66)">
+                <!-- capa glow difuminada detrás -->
+                <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradNaranja)" stroke-width="5"
+                  stroke-linecap="round" filter="url(#glowNeon)"
+                  stroke-dasharray="364.4" :stroke-dashoffset="364.4 - (364.4 * progresoAnillo/100)"
+                  style="transition: stroke-dashoffset 0.7s cubic-bezier(.2,.8,.2,1)"/>
+                <!-- capa nítida delante -->
+                <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradNaranja)" stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-dasharray="364.4" :stroke-dashoffset="364.4 - (364.4 * progresoAnillo/100)"
+                  style="transition: stroke-dashoffset 0.7s cubic-bezier(.2,.8,.2,1)"/>
               </g>
             </template>
+
+            <!-- CÁLCULO: arco láser naranja+dorado que recorre el círculo encendiéndolo -->
             <template x-if="estado==='calculo'">
-              <circle class="ring-laser" r="58" cx="62" cy="62" stroke-dasharray="90 274"></circle>
+              <g class="laser-rotate">
+                <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradMixto)" stroke-width="5"
+                  stroke-linecap="round" filter="url(#glowNeon)" stroke-dasharray="80 284"/>
+                <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradMixto)" stroke-width="3"
+                  stroke-linecap="round" stroke-dasharray="80 284"/>
+              </g>
             </template>
+
+            <!-- RESULTADO: anillo 100% encendido en NARANJA corporativo, pulsando -->
             <template x-if="estado==='resultado'">
-              <circle class="ring-complete" r="58" cx="62" cy="62" stroke-dasharray="364"></circle>
-            </template>
-            <template x-if="estado==='bienvenida'||estado==='registro'||estado==='preparacion'||estado==='revision'">
-              <circle class="ring-track" :r="(estado==='revision')?45:58" :cx="(estado==='revision')?49:62" :cy="(estado==='revision')?49:62"></circle>
+              <g class="ring-done">
+                <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradNaranja)" stroke-width="5"
+                  stroke-linecap="round" filter="url(#glowNeon)"/>
+                <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradNaranja)" stroke-width="3"
+                  stroke-linecap="round"/>
+              </g>
             </template>
           </svg>
         </div>
@@ -108,9 +149,26 @@
                 <div class="trans-orb">
                   <div class="orb-container" style="margin:0;">
                     <div class="orb-core"><div class="orb-spark"></div></div>
-                    <svg class="progress-ring" width="124" height="124" viewBox="0 0 124 124">
-                      <circle class="ring-fill" r="58" cx="62" cy="62" stroke-dasharray="364"
-                        :stroke-dashoffset="364 - (364 * progresoRing/100)"></circle>
+                    <svg class="ring-svg" width="132" height="132" viewBox="0 0 132 132">
+                      <defs>
+                        <linearGradient id="gradTrans" x1="0" y1="0" x2="132" y2="132" gradientUnits="userSpaceOnUse">
+                          <stop stop-color="#EF5036"/><stop offset="1" stop-color="#D13F26"/>
+                        </linearGradient>
+                        <filter id="glowTrans" x="-60%" y="-60%" width="220%" height="220%">
+                          <feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                      </defs>
+                      <circle cx="66" cy="66" r="58" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3"/>
+                      <g transform="rotate(-90 66 66)">
+                        <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradTrans)" stroke-width="5"
+                          stroke-linecap="round" filter="url(#glowTrans)"
+                          stroke-dasharray="364.4" :stroke-dashoffset="364.4 - (364.4 * progresoAnillo/100)"
+                          style="transition: stroke-dashoffset 0.7s cubic-bezier(.2,.8,.2,1)"/>
+                        <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradTrans)" stroke-width="3"
+                          stroke-linecap="round"
+                          stroke-dasharray="364.4" :stroke-dashoffset="364.4 - (364.4 * progresoAnillo/100)"
+                          style="transition: stroke-dashoffset 0.7s cubic-bezier(.2,.8,.2,1)"/>
+                      </g>
                     </svg>
                   </div>
                 </div>
