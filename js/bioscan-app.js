@@ -43,7 +43,10 @@ function bioscanApp() {
     get esUltima() { return this.indiceActual === this.preguntas.length - 1; },
     get bloqueTitulo() { return this.BLOQUES[this.preguntaActual.bloque]; },
     get progresoRing() { return Math.round((this.indiceActual / this.preguntas.length) * 100); },
-    get ringOffset() { return 364 - (364 * this.progresoRing / 100); },
+    // El anillo se enciende contando la pregunta actual como "en curso" (+1),
+    // asi el usuario VE el progreso encenderse desde la primera pregunta (feedback #1)
+    get progresoAnillo() { return Math.round(((this.indiceActual + 1) / this.preguntas.length) * 100); },
+    get ringOffset() { return 364.4 - (364.4 * this.progresoAnillo / 100); },
     // perfil avanzado actual => merece felicitacion (punto 10)
     get esAvanzado() { return this.perfilActualData && this.perfilActualData.es_destino; },
     get puedeAvanzar() {
@@ -268,3 +271,4 @@ function bioscanApp() {
   };
 }
 window.bioscanApp = bioscanApp;
+
