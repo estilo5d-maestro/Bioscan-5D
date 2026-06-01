@@ -339,8 +339,17 @@
             <!-- Cierre -->
             <div class="cierre">
               <div class="cierre-titulo" x-text="UI.resultado.cierreTitulo"></div>
-              <p x-html="UI.resultado.cierreParrafo"></p>
-              <p x-text="UI.resultado.cierreParrafo2"></p>
+              <!-- Texto del Umbral: solo cuando NO es modo PRO -->
+              <template x-if="!modoPro">
+                <div>
+                  <p x-html="UI.resultado.cierreParrafo"></p>
+                  <p x-text="UI.resultado.cierreParrafo2"></p>
+                </div>
+              </template>
+              <!-- Texto PRO: cuando SÍ es modo PRO -->
+              <template x-if="modoPro">
+                <p x-text="'Tu diagnóstico revela quién eres hoy. Tu transformación empieza cuando decides hacia dónde ir.'"></p>
+              </template>
             </div>
 
             <div class="cta-wrap">
@@ -348,10 +357,12 @@
               <!-- PRO: bullets teaser, solo en modo PRO -->
               <template x-if="modoPro">
                 <div class="pro-teaser">
-                  <div class="pt-item">✦ Un plan de 7 días diseñado para TU perfil</div>
-                  <div class="pt-item">✦ Prácticas guiadas que transforman tu cuerpo día a día</div>
-                  <div class="pt-item">✦ Mira tu huella crecer y tu racha encenderse</div>
-                  <div class="pt-item">✦ Acceso de Fundador · solo para los primeros 20</div>
+                  <template x-for="b in bulletsPro" :key="b.t">
+                    <div class="pt-item">
+                      <span class="pt-ico" x-html="b.ico"></span>
+                      <span x-text="b.t"></span>
+                    </div>
+                  </template>
                 </div>
               </template>
               <button class="btn-ghost" @click="descargarPDF()" x-text="UI.resultado.botonPDF"></button>

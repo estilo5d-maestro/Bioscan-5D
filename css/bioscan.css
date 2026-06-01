@@ -268,5 +268,7 @@ body, html {
 .error-msg { color: #ff7b7b; font-size: 13px; margin-bottom: 13px; padding: 10px; background: rgba(255,107,107,0.08); border-radius: 8px; border: 1px solid rgba(255,107,107,0.2); }
 .spinner { width: 26px; height: 26px; border: 3px solid rgba(255,255,255,0.12); border-top-color: var(--orange-bright); border-radius: 50%; animation: girar 0.8s linear infinite; margin: 0 auto; }
 
-.pro-teaser { margin-top:18px; display:flex; flex-direction:column; gap:9px; text-align:left; }
-.pt-item { font-size:13.5px; color:#C8C8CC; line-height:1.4; padding-left:2px; }
+.pro-teaser { margin-top:20px; display:flex; flex-direction:column; gap:12px; text-align:left; }
+.pt-item { display:flex; align-items:flex-start; gap:11px; font-size:13.5px; color:#C8C8CC; line-height:1.45; }
+.pt-ico { flex-shrink:0; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; }
+.pt-ico svg { width:20px; height:20px; stroke:#EF5036; fill:none; stroke-width:1.7; }

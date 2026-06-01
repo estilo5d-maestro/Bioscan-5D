@@ -43,6 +43,18 @@
     app.retornoCargando = false;
     app.retornoError = null;
 
+    // Bullets teaser con íconos SVG naranja de línea (estilo pro)
+    app.bulletsPro = [
+      { ico: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7l2.2 4.5L12 16l-2.2-4.5z"/></svg>',
+        t: "Un plan de 7 días diseñado para TU perfil" },
+      { ico: '<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"/><path d="M12 13V9M9 3h6M5 6l1.5 1.5"/></svg>',
+        t: "Prácticas guiadas que transforman tu cuerpo día a día" },
+      { ico: '<svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 3 6-7"/><path d="M3 21h18"/></svg>',
+        t: "Mira tu huella crecer y tu racha encenderse" },
+      { ico: '<svg viewBox="0 0 24 24"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21l-4.9-2.6.9-5.5-4-3.9 5.5-.8z"/></svg>',
+        t: "Acceso de Fundador · solo para los primeros 20" }
+    ];
+
     // ----- ir a la pantalla de retorno desde bienvenida -----
     app.irARetorno = function () {
       this.estado = "retorno";
