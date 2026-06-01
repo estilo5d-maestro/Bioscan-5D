@@ -18,7 +18,7 @@
    5) devuelve perfil (de su diagnostico) + dias completados
    ============================================================ */
 
-const FECHA_UMBRAL = "2026-06-04T18:00:00-05:00"; // ⚠️ DEBE coincidir con FECHA_UMBRAL de /js/config.js
+const FECHA_UMBRAL = "2026-05-30T18:00:00-05:00"; // ⚠️ DEBE coincidir con FECHA_UMBRAL de /js/config.js
 const DIAS_ACCESO = 30;
 
 const SB_URL = process.env.SUPABASE_URL;
