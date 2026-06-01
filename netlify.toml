@@ -40,5 +40,9 @@
   from = "/api/recuperar-diagnostico"
   to = "/.netlify/functions/recuperar-diagnostico"
   status = 200
-    
+
+[[redirects]]
+  from = "/api/obtener-codigo"
+  to = "/.netlify/functions/obtener-codigo"
+  status = 200    
 
