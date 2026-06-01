@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BioScan PRO">
+  <meta name="theme-color" content="#050505">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icono-192.png">
+  <title>BioScan 5D · PRO</title>
+  <link rel="stylesheet" href="/css/bioscan.css">
+  <link rel="stylesheet" href="/css/pro.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div id="scanner-wrapper-master">
+    <div class="sonar-bg"></div>
+    <div class="iphone-frame">
+      <div class="dynamic-island"></div>
+      <div class="screen-gloss"></div>
+
+      <div class="app-content" x-data="bioscanPro()" x-init="init()" x-cloak>
+
+        <!-- confetti somático en celebración -->
+        <template x-if="confetti">
+          <div class="confetti-layer">
+            <template x-for="i in 18" :key="i">
+              <div class="confetti-dot" :style="`left:${(i*5.4)%100}%; background:${i%2?'#EF5036':'#C9A227'}; animation-delay:${(i%6)*0.12}s;`"></div>
+            </template>
+          </div>
+        </template>
+
+        <!-- ARO NEÓN (portal) -->
+        <template x-if="['activacion','bloqueoFecha','expirado','cargando'].includes(estado)">
+          <div class="orb-container">
+            <div class="orb-core"><div class="orb-spark"></div></div>
+            <svg class="ring-svg" width="132" height="132" viewBox="0 0 132 132">
+              <defs>
+                <linearGradient id="gN" x1="0" y1="0" x2="132" y2="132" gradientUnits="userSpaceOnUse"><stop stop-color="#EF5036"/><stop offset="1" stop-color="#D13F26"/></linearGradient>
+                <filter id="gl" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              </defs>
+              <circle cx="66" cy="66" r="58" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3"/>
+              <g class="ring-done"><circle cx="66" cy="66" r="58" fill="none" stroke="url(#gN)" stroke-width="5" stroke-linecap="round" filter="url(#gl)"/><circle cx="66" cy="66" r="58" fill="none" stroke="url(#gN)" stroke-width="3" stroke-linecap="round"/></g>
+            </svg>
+          </div>
+        </template>
+
+        <!-- CARGANDO -->
+        <template x-if="estado==='cargando'"><div class="step-card"><div class="calc-texto">Abriendo tu portal...</div></div></template>
+
+        <!-- ACTIVACIÓN -->
+        <template x-if="estado==='activacion'">
+          <div class="step-card anim-card">
+            <span class="portal-kicker" x-text="UI.activar.kicker"></span>
+            <h1 class="titulo display" x-text="UI.activar.titulo"></h1>
+            <p class="parrafo" x-text="UI.activar.parrafo"></p>
+            <div class="form-box">
+              <template x-if="error"><div class="error-msg" x-text="error"></div></template>
+              <input type="email" class="input" :placeholder="UI.activar.phEmail" x-model="formEmail" :disabled="cargando">
+              <input type="text" class="input input-code" :placeholder="UI.activar.phCodigo" x-model="formCodigo" :disabled="cargando">
+              <button class="btn" @click="activar(false)" :disabled="cargando">
+                <span x-show="!cargando" x-text="UI.activar.boton"></span>
+                <span x-show="cargando"><div class="spinner"></div></span>
+              </button>
+            </div>
+            <div class="acceso-nota">🔑 <span x-text="UI.activar.nota"></span></div>
+          </div>
+        </template>
+
+        <!-- BLOQUEO FECHA -->
+        <template x-if="estado==='bloqueoFecha'">
+          <div class="step-card anim-card">
+            <span class="portal-kicker" x-text="UI.bloqueoFecha.kicker"></span>
+            <h1 class="titulo display" x-text="UI.bloqueoFecha.titulo"></h1>
+            <p class="parrafo" x-text="UI.bloqueoFecha.parrafo"></p>
+            <button class="btn" @click="irAlUmbral()" x-text="UI.bloqueoFecha.boton"></button>
+          </div>
+        </template>
+
+        <!-- EXPIRADO -->
+        <template x-if="estado==='expirado'">
+          <div class="step-card anim-card">
+            <span class="portal-kicker" x-text="UI.expirado.kicker"></span>
+            <h1 class="titulo display" x-text="UI.expirado.titulo"></h1>
+            <p class="parrafo" x-text="UI.expirado.parrafo"></p>
+            <button class="btn" @click="irAlUmbral()" x-text="UI.expirado.boton"></button>
+          </div>
+        </template>
+
+        <!-- HOME -->
+        <template x-if="estado==='home'">
+          <div class="pro-home anim-card">
+            <div class="pro-header">
+              <div>
+                <div class="pro-saludo"><span x-text="UI.home.saludo"></span>, <strong x-text="sesion.nombre || 'BioScanner'"></strong></div>
+                <div class="pro-viaje-tag" x-text="viajeTitulo"></div>
+              </div>
+              <div class="pro-racha-chip">
+                <div class="racha-fuego">🔥</div>
+                <div class="racha-num" x-text="racha"></div>
+                <div class="racha-lbl" x-text="UI.home.rachaUnidad"></div>
+              </div>
+            </div>
+
+            <!-- huella radar -->
+            <div class="pro-card">
+              <div class="pro-card-label" x-text="UI.home.huellaLabel"></div>
+              <div class="radar-wrap"><canvas id="radarPro"></canvas></div>
+            </div>
+
+            <!-- camino -->
+            <div class="pro-card-label mt" x-text="UI.home.diasLabel"></div>
+            <div class="camino-progreso">
+              <div class="cp-bar"><div class="cp-fill" :style="`width:${progresoGeneral}%`"></div></div>
+              <div class="cp-pct" x-text="progresoGeneral + '%'"></div>
+            </div>
+            <div class="dias-lista">
+              <template x-for="d in PLAN.DIAS" :key="d.numero">
+                <div class="dia-item" :class="estadoDia(d.numero)" @click="abrirDia(d.numero)">
+                  <div class="dia-orbe">
+                    <span x-show="estadoDia(d.numero)==='completado'">✓</span>
+                    <span x-show="estadoDia(d.numero)==='hoy'" x-text="d.numero"></span>
+                    <span x-show="estadoDia(d.numero)==='espera'">◷</span>
+                    <span x-show="estadoDia(d.numero)==='bloqueado'">🔒</span>
+                  </div>
+                  <div class="dia-info">
+                    <div class="dia-tema">Día <span x-text="d.numero"></span> · <span x-text="d.tema"></span></div>
+                    <div class="dia-sub" x-show="estadoDia(d.numero)==='hoy'" x-text="UI.home.diaHoyTag"></div>
+                    <div class="dia-sub" x-show="estadoDia(d.numero)==='espera'" x-text="UI.home.diaEsperaTag"></div>
+                    <div class="dia-sub" x-show="estadoDia(d.numero)!=='hoy' && estadoDia(d.numero)!=='espera'" x-text="d.subtitulo"></div>
+                  </div>
+                  <div class="dia-chevron" x-show="estadoDia(d.numero)==='completado' || estadoDia(d.numero)==='hoy'">›</div>
+                </div>
+              </template>
+            </div>
+
+            <!-- badges -->
+            <template x-if="badgesObtenidos().length">
+              <div class="badges-wrap">
+                <template x-for="b in badgesObtenidos()" :key="b.titulo">
+                  <div class="badge" :title="b.cond"><span class="badge-ico" x-text="b.icono"></span><small x-text="b.titulo"></small></div>
+                </template>
+              </div>
+            </template>
+
+            <!-- seguimiento -->
+            <template x-if="diasCompletados.includes(7)">
+              <div class="pro-card seguimiento">
+                <div class="pro-card-label" x-text="UI.home.seguimientoLabel"></div>
+                <p class="dia-texto sm" x-text="UI.home.seguimientoTexto"></p>
+              </div>
+            </template>
+
+            <div class="pro-footer">
+              <button class="btn-ghost" @click="descargarInstructivo()" x-text="UI.home.btnGuia"></button>
+              <button class="btn-ghost sm" @click="salir()" x-text="UI.home.btnSalir"></button>
+            </div>
+            <img class="logo-5d-final" src="https://cdn.shopify.com/s/files/1/0952/6060/6762/files/Logo_-_5D_-_Con_Borde_Redondo_Blanco.png?v=1774043494" alt="5D">
+          </div>
+        </template>
+
+        <!-- DÍA -->
+        <template x-if="estado==='dia' && diaActual">
+          <div class="pro-dia anim-card">
+            <div class="dia-top">
+              <button class="dia-volver" @click="volverHome()">‹ <span x-text="UI.dia.volver"></span></button>
+              <div class="dia-pasos-dots">
+                <template x-for="(p,i) in pasos.slice(0,5)" :key="p"><span class="paso-dot" :class="{on: pasos.indexOf(pasoDia) >= i}"></span></template>
+              </div>
+            </div>
+
+            <div class="dia-cabecera">
+              <div class="dia-num-kicker">DÍA <span x-text="diaActual.numero"></span></div>
+              <div class="dia-tema-grande" x-text="diaActual.tema"></div>
+              <div class="dia-subtitulo" x-text="diaActual.subtitulo"></div>
+            </div>
+
+            <!-- CONCEPTO (núcleo + matiz de origen) -->
+            <template x-if="pasoDia==='concepto'">
+              <div class="dia-paso">
+                <div class="paso-label" x-text="UI.dia.conceptoLabel"></div>
+                <p class="dia-texto" x-text="diaActual.concepto"></p>
+                <template x-if="lenteOrigen && lenteOrigen.matiz && lenteOrigen.matiz[diaActual.numero]">
+                  <div class="matiz-box"><span class="mb-ico">◆</span><span x-text="lenteOrigen.matiz[diaActual.numero]"></span></div>
+                </template>
+                <button class="btn" @click="avanzarPaso()" x-text="UI.dia.btnComenzar"></button>
+              </div>
+            </template>
+
+            <!-- TINY -->
+            <template x-if="pasoDia==='tiny'">
+              <div class="dia-paso">
+                <div class="paso-label" x-text="UI.dia.tinyLabel"></div>
+                <div class="anchor-box"><span>📍</span><span x-text="diaActual.anchor"></span></div>
+                <h3 class="paso-titulo" x-text="diaActual.tiny.titulo"></h3>
+                <ol class="paso-pasos"><template x-for="(s,i) in diaActual.tiny.pasos" :key="i"><li x-text="s"></li></template></ol>
+                <div class="celebra-box"><span class="cb-ico">✦</span><span x-text="diaActual.celebracion"></span></div>
+                <label class="check-grande" :class="{on: tinyCheck}" @click="tinyCheck=!tinyCheck"><span class="cg-box" x-text="tinyCheck?'✓':''"></span><span x-text="UI.dia.btnHiceLo"></span></label>
+                <button class="btn" @click="avanzarPaso()" :disabled="!tinyCheck">Siguiente</button>
+              </div>
+            </template>
+
+            <!-- CORE -->
+            <template x-if="pasoDia==='core'">
+              <div class="dia-paso">
+                <div class="paso-label" x-text="UI.dia.coreLabel"></div>
+                <h3 class="paso-titulo" x-text="diaActual.core.titulo"></h3>
+                <p class="dia-texto sm" x-text="diaActual.core.descripcion"></p>
+                <template x-if="diaActual.core.audio && diaActual.core.audio.disponible && diaActual.core.audio.url"><audio class="audio-player" controls :src="diaActual.core.audio.url"></audio></template>
+                <template x-if="!(diaActual.core.audio && diaActual.core.audio.disponible)"><div class="audio-aviso" x-text="UI.dia.audioProximamente"></div></template>
+                <div class="timer-ring-wrap">
+                  <div class="timer-ring">
+                    <svg width="128" height="128" viewBox="0 0 128 128">
+                      <circle cx="64" cy="64" r="58" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="5"/>
+                      <circle cx="64" cy="64" r="58" fill="none" stroke="#EF5036" stroke-width="5" stroke-linecap="round" stroke-dasharray="364.4" :stroke-dashoffset="364.4 - (364.4 * timerPct/100)" style="transition:stroke-dashoffset 1s linear; filter:drop-shadow(0 0 6px rgba(239,80,54,0.6))"/>
+                    </svg>
+                    <div class="timer-num" x-text="timerActivo ? timerTexto : (diaActual.core.duracionMin + ':00')"></div>
+                  </div>
+                  <button class="btn-ghost" x-show="!timerActivo" @click="iniciarTimer(diaActual.core.duracionMin)">Iniciar práctica</button>
+                  <button class="btn-ghost" x-show="timerActivo" @click="pararTimer()">Pausar</button>
+                </div>
+                <ol class="paso-pasos"><template x-for="(s,i) in diaActual.core.pasos" :key="i"><li x-text="s"></li></template></ol>
+                <label class="check-grande" :class="{on: coreCheck}" @click="coreCheck=!coreCheck"><span class="cg-box" x-text="coreCheck?'✓':''"></span><span x-text="UI.dia.btnCoreOk"></span></label>
+                <button class="btn" @click="avanzarPaso()">Siguiente</button>
+              </div>
+            </template>
+
+            <!-- RETO (sesgo de destino + plus si maestría) -->
+            <template x-if="pasoDia==='reto'">
+              <div class="dia-paso">
+                <div class="paso-label" x-text="UI.dia.retoLabel"></div>
+                <div class="reto-box" x-text="retoDelDia(diaActual)"></div>
+                <template x-if="retoPlus()">
+                  <div class="plus-box"><span class="plus-tag" x-text="UI.dia.plusLabel"></span><span x-text="retoPlus()"></span></div>
+                </template>
+                <label class="check-grande" :class="{on: retoCheck}" @click="retoCheck=!retoCheck"><span class="cg-box" x-text="retoCheck?'✓':''"></span><span x-text="UI.dia.btnRetoOk"></span></label>
+                <button class="btn" @click="avanzarPaso()">Siguiente</button>
+              </div>
+            </template>
+
+            <!-- JOURNAL -->
+            <template x-if="pasoDia==='journal'">
+              <div class="dia-paso">
+                <div class="paso-label" x-text="UI.dia.journalLabel"></div>
+                <p class="dia-texto sm">Responde para anclar tu aprendizaje y desbloquear el siguiente día.</p>
+                <template x-for="(q,i) in diaActual.journal" :key="i">
+                  <div class="journal-q"><label x-text="q"></label><textarea class="input textarea" rows="2" x-model="journalResp[i]"></textarea></div>
+                </template>
+                <div class="journal-hint">Respuestas para avanzar: <strong x-text="journalRespondido"></strong> / 2</div>
+                <button class="btn" @click="completarDia()" :disabled="!puedeCompletar || cargando">
+                  <span x-show="!cargando" x-text="UI.dia.btnCompletar"></span>
+                  <span x-show="cargando"><div class="spinner"></div></span>
+                </button>
+              </div>
+            </template>
+
+            <!-- CELEBRACIÓN (peak-end) -->
+            <template x-if="pasoDia==='celebracion'">
+              <div class="dia-paso celebracion-final">
+                <div class="orb-container" style="margin:0 auto 6px;">
+                  <div class="orb-core"><div class="orb-spark"></div></div>
+                  <svg class="ring-svg" width="132" height="132" viewBox="0 0 132 132">
+                    <defs><linearGradient id="gC" x1="0" y1="0" x2="132" y2="132" gradientUnits="userSpaceOnUse"><stop stop-color="#EF5036"/><stop offset="1" stop-color="#C9A227"/></linearGradient>
+                    <filter id="glC" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+                    <circle cx="66" cy="66" r="58" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3"/>
+                    <g class="ring-done"><circle cx="66" cy="66" r="58" fill="none" stroke="url(#gC)" stroke-width="5" stroke-linecap="round" filter="url(#glC)"/><circle cx="66" cy="66" r="58" fill="none" stroke="url(#gC)" stroke-width="3" stroke-linecap="round"/></g>
+                  </svg>
+                </div>
+                <h2 class="celebra-titulo" x-text="UI.dia.celebraTitulo"></h2>
+                <div class="celebra-dia" x-text="'Día ' + diaActual.numero + ' · ' + diaActual.tema"></div>
+                <div class="celebra-racha"><span>🔥</span><span class="cr-num" x-text="racha"></span><span class="cr-lbl">días de racha</span></div>
+                <template x-if="badgesNuevos.length">
+                  <div class="badges-wrap centro">
+                    <template x-for="b in badgesNuevos" :key="b.titulo"><div class="badge"><span class="badge-ico" x-text="b.icono"></span><small x-text="b.titulo"></small></div></template>
+                  </div>
+                </template>
+                <button class="btn" @click="volverHome()" x-text="UI.dia.btnVolverHome"></button>
+              </div>
+            </template>
+
+          </div>
+        </template>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/plan-data.js"></script>
+  <script src="/js/pro-pdf.js"></script>
+  <script src="/js/pro-app.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("/activar/sw.js").catch(()=>{})); }
+  </script>
+</body>
+</html>

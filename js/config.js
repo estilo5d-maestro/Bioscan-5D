@@ -15,8 +15,8 @@
 
 window.BIOSCAN_CONFIG = {
   // --- Supabase (publico, protegido por RLS) ---
-  SUPABASE_URL: "https://eiugtjmjkojuatliooql.supabase.co",
-  SUPABASE_ANON_KEY: "sb_publishable_r9mje14DmnMuCynZgOg9tQ_m6misenn",
+  SUPABASE_URL: "https://TU_PROYECTO.supabase.co",
+  SUPABASE_ANON_KEY: "TU_ANON_KEY_PUBLICA",
 
   // --- Endpoint de la Netlify Function del algoritmo ---
   // En produccion Netlify lo sirve automaticamente en esta ruta:
@@ -30,5 +30,13 @@ window.BIOSCAN_CONFIG = {
   FECHA_UMBRAL: "2026-06-04T18:00:00-05:00",
 
   // --- URL de inscripcion al Umbral (acceso abierto) ---
-  URL_UMBRAL: "https://www.5d.com.co/umbral-5d-01/"
+  URL_UMBRAL: "https://www.5d.com.co/umbral-5d-01/",
+
+  // ============================================================
+  // MODULO PRO (Sub-mensaje 2.4) — endpoints de activacion y progreso
+  // Coinciden con los redirects de netlify.toml.
+  // ============================================================
+  ENDPOINT_ACTIVAR: "/api/activar-codigo",
+  ENDPOINT_PROGRESO: "/api/progreso"
 };
+

@@ -1,12 +1,15 @@
 # ============================================================
-# BIOSCAN 5D · MODO UMBRAL — netlify.toml
+# BIOSCAN 5D — netlify.toml  (versión COMPLETA · Sub-mensaje 2.4)
+# Incluye las funciones del diagnóstico (2.3) + las del módulo PRO (2.4).
+# Si tu archivo ya tenía las 3 primeras, basta con añadir los DOS
+# últimos bloques (activar-codigo y progreso).
 # ============================================================
 
 [build]
   publish = "."
   functions = "netlify/functions"
 
-# Endpoints publicos (mas limpios que /.netlify/functions/...)
+# ---------- Diagnóstico (Sub-mensaje 2.3) ----------
 [[redirects]]
   from = "/api/calcular-perfil"
   to = "/.netlify/functions/calcular-perfil"
@@ -17,17 +20,19 @@
   to = "/.netlify/functions/enviar-rdstation"
   status = 200
 
-# Webhook publico para Hotmart (esta es la URL que se registra en Hotmart)
 [[redirects]]
   from = "/api/webhook-hotmart"
   to = "/.netlify/functions/webhook-hotmart"
   status = 200
 
-# Headers de seguridad basicos
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "SAMEORIGIN"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
+# ---------- Módulo PRO (Sub-mensaje 2.4) — NUEVOS ----------
+[[redirects]]
+  from = "/api/activar-codigo"
+  to = "/.netlify/functions/activar-codigo"
+  status = 200
+
+[[redirects]]
+  from = "/api/progreso"
+  to = "/.netlify/functions/progreso"
+  status = 200
 
