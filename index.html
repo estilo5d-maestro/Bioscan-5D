@@ -97,7 +97,31 @@
             <p class="parrafo" x-html="UI.bienvenida.parrafo2"></p>
             <p class="parrafo" x-text="UI.bienvenida.parrafo3"></p>
             <button class="btn" @click="irARegistro()" x-text="UI.bienvenida.boton"></button>
+            <!-- PRO: vía de retorno, solo visible en modo PRO -->
+            <template x-if="modoPro">
+              <button class="btn-ghost" @click="irARetorno()" style="margin-top:6px;">
+                ¿Ya hiciste tu BioScan? Ingresa tu correo →
+              </button>
+            </template>
             <div class="firma-tech" x-text="UI.bienvenida.respaldo"></div>
+          </div>
+        </template>
+
+        <!-- ===== RETORNO (PRO): ya hice mi BioScan ===== -->
+        <template x-if="estado==='retorno'">
+          <div class="step-card anim-card">
+            <span class="sello">TU BIOSCAN</span>
+            <h1 class="titulo">Bienvenido de vuelta</h1>
+            <p class="parrafo">Ingresa el correo con el que hiciste tu BioScan y te llevamos directo a tu resultado.</p>
+            <div class="form-box">
+              <template x-if="retornoError"><div class="error-msg" x-text="retornoError"></div></template>
+              <input type="email" class="input" placeholder="tu@correo.com" x-model="retornoEmail" :disabled="retornoCargando" @keydown.enter="recuperarPorEmail()">
+              <button class="btn" @click="recuperarPorEmail()" :disabled="retornoCargando">
+                <span x-show="!retornoCargando">Ver mi resultado</span>
+                <span x-show="retornoCargando"><div class="spinner"></div></span>
+              </button>
+              <button class="btn-ghost" @click="volverABienvenida()" style="margin-top:4px;">‹ Volver</button>
+            </div>
           </div>
         </template>
 
@@ -320,7 +344,16 @@
             </div>
 
             <div class="cta-wrap">
-              <button class="btn" @click="irAlUmbral()" x-text="UI.resultado.botonUmbral"></button>
+              <button class="btn" @click="accionBotonFinal()" x-text="modoPro ? 'Comienza tu transformación PRO' : UI.resultado.botonUmbral"></button>
+              <!-- PRO: bullets teaser, solo en modo PRO -->
+              <template x-if="modoPro">
+                <div class="pro-teaser">
+                  <div class="pt-item">✦ Un plan de 7 días diseñado para TU perfil</div>
+                  <div class="pt-item">✦ Prácticas guiadas que transforman tu cuerpo día a día</div>
+                  <div class="pt-item">✦ Mira tu huella crecer y tu racha encenderse</div>
+                  <div class="pt-item">✦ Acceso de Fundador · solo para los primeros 20</div>
+                </div>
+              </template>
               <button class="btn-ghost" @click="descargarPDF()" x-text="UI.resultado.botonPDF"></button>
               <template x-if="puedeRepetir()">
                 <button class="btn-ghost" @click="repetirBioScan()" x-text="UI.resultado.botonRepetir"></button>
@@ -347,6 +380,7 @@
   <script src="/js/supabase-client.js"></script>
   <script src="/js/pdf-generator.js"></script>
   <script src="/js/bioscan-app.js"></script>
+  <script src="/js/pro-retorno.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>
