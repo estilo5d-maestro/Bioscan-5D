@@ -32,8 +32,13 @@ function bioscanPro() {
     async init() {
       const params = new URLSearchParams(window.location.search);
       const e = params.get("email"); if (e) this.formEmail = decodeURIComponent(e);
+      const c = params.get("codigo"); if (c) this.formCodigo = decodeURIComponent(c).toUpperCase();
       const g = this.leerSesion();
+      // 1) Si ya hay sesión guardada (entró antes), activar con ella.
       if (g && g.email && g.codigo) { this.formEmail = g.email; this.formCodigo = g.codigo; await this.activar(true); }
+      // 2) Si viene email+código por la URL (desde gracias o correo), activar de UN CLIC.
+      else if (e && c) { await this.activar(true); }
+      // 3) Si no, mostrar la pantalla de activación (con lo que se haya podido precargar).
       else this.estado = "activacion";
     },
 
@@ -255,9 +260,18 @@ function bioscanPro() {
       });
     },
 
-    descargarInstructivo(){ if(window.ProPDF) window.ProPDF.generar({ nombre:this.sesion.nombre, origen:this.origen, destino:this.destino, esMaestria:this.sesion.esMaestria }); },
+    descargarInstructivo(){
+      // Enlaza al PDF hermoso correcto (los 32 caminos en /guias-pro/), consistente con la página de gracias
+      var o = (this.origen || "").toLowerCase();
+      var d = (this.destino || "").toLowerCase();
+      if(!o || !d){ return; }
+      var url = "/guias-pro/guia-" + o + "-" + d + ".pdf";
+      window.open(url, "_blank");
+    },
     irAlUmbral(){ window.open(URL_UMBRAL, "_blank"); }
   };
 }
 window.bioscanPro = bioscanPro;
+
+
 
