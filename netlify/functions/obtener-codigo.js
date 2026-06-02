@@ -43,13 +43,22 @@ exports.handler = async function (event) {
   try {
     const body = JSON.parse(event.body || "{}");
     const email = (body.email || "").toLowerCase().trim();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const transaction = (body.transaction || "").trim();
+
+    // Debe venir al menos uno de los dos identificadores
+    if (!email && !transaction) {
+      return { statusCode: 400, headers, body: JSON.stringify({ ok: false, reason: "faltan-datos" }) };
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return { statusCode: 400, headers, body: JSON.stringify({ ok: false, reason: "email-invalido" }) };
     }
 
-    // 1) Buscar el código de compra más reciente para ese email
+    // 1) Buscar la compra: por transaction (viene de Hotmart) O por email (viene del correo)
+    let filtro;
+    if (transaction) filtro = `hotmart_transaction=eq.${enc(transaction)}`;
+    else filtro = `email=eq.${enc(email)}`;
     const compras = await sbGet(
-      `compradores_pro?email=eq.${enc(email)}&select=codigo,nombre,fecha_compra&order=fecha_compra.desc&limit=1`
+      `compradores_pro?${filtro}&select=codigo,nombre,email,perfil_actual,perfil_destino,es_maestria,fecha_compra&order=fecha_compra.desc&limit=1`
     );
     if (!compras || compras.length === 0) {
       // Aún no hay código (el webhook puede tardar unos segundos)
@@ -57,21 +66,28 @@ exports.handler = async function (event) {
     }
     const compra = compras[0];
 
-    // 2) Recuperar su perfil (para enlazar el PDF correcto)
-    let perfil_actual = null, perfil_destino = null, nombre = compra.nombre || "";
-    try {
-      const users = await sbGet(`users?email=eq.${enc(email)}&select=id,nombre&limit=1`);
-      if (users && users.length) {
-        if (!nombre) nombre = users[0].nombre || "";
-        const diag = await sbGet(
-          `diagnosticos?user_id=eq.${enc(users[0].id)}&select=perfil_actual,perfil_destino&order=completado_at.desc&limit=1`
-        );
-        if (diag && diag.length) {
-          perfil_actual = diag[0].perfil_actual;
-          perfil_destino = diag[0].perfil_destino;
+    // 2) El perfil CONGELADO vive en la propia compra (Regla 1: coherencia).
+    //    Si por alguna razón no se congeló (compra vieja), caer al diagnóstico.
+    let perfil_actual = compra.perfil_actual || null;
+    let perfil_destino = compra.perfil_destino || null;
+    let nombre = compra.nombre || "";
+    const emailReal = compra.email || email;
+
+    if (!perfil_actual || !perfil_destino) {
+      try {
+        const users = await sbGet(`users?email=eq.${enc(emailReal)}&select=id,nombre&limit=1`);
+        if (users && users.length) {
+          if (!nombre) nombre = users[0].nombre || "";
+          const diag = await sbGet(
+            `diagnosticos?user_id=eq.${enc(users[0].id)}&select=perfil_actual,perfil_destino&order=completado_at.desc&limit=1`
+          );
+          if (diag && diag.length) {
+            perfil_actual = diag[0].perfil_actual;
+            perfil_destino = diag[0].perfil_destino;
+          }
         }
-      }
-    } catch (e) { console.warn("perfil no recuperado:", e.message); }
+      } catch (e) { console.warn("perfil no recuperado:", e.message); }
+    }
 
     return {
       statusCode: 200, headers,
@@ -79,6 +95,7 @@ exports.handler = async function (event) {
         ok: true, encontrado: true,
         codigo: compra.codigo,
         nombre: nombre,
+        email: emailReal,
         perfil_actual: perfil_actual,
         perfil_destino: perfil_destino
       })
@@ -88,4 +105,5 @@ exports.handler = async function (event) {
     return { statusCode: 200, headers, body: JSON.stringify({ ok: false, reason: "error", detalle: err.message }) };
   }
 };
+
 

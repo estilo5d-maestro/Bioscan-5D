@@ -58,7 +58,6 @@ h1 .em{ font-style:italic; color:var(--gold-l); }
   <div class="codigo-box" id="codigoBox" style="display:none;">
     <div class="lbl">Tu código de activación</div>
     <div class="cod" id="codigoTxt">—</div>
-    <div style="font-size: 10px; color: var(--dim); margin-top: 8px;">Código personal, intransferible y de un solo uso.</div>
   </div>
 
   <div class="cargando" id="cargando"><span class="spinner"></span> Preparando tu acceso...</div>
@@ -81,13 +80,14 @@ h1 .em{ font-style:italic; color:var(--gold-l); }
 
   (function(){
     var params = new URLSearchParams(window.location.search);
-    // Hotmart pasa el email del comprador. Acepta varias variantes por robustez.
+    // Del correo viene ?email=... ; de Hotmart viene ?transaction=...
     var email = params.get("email") || params.get("buyer_email") || params.get("e") || "";
+    var transaction = params.get("transaction") || params.get("trans") || "";
     var saludo = document.getElementById("saludo");
     var cargando = document.getElementById("cargando");
 
-    if (!email) {
-      // Sin email: igual dejamos entrar a /activar manual
+    if (!email && !transaction) {
+      // Sin ningún identificador: igual dejamos entrar a /activar manual
       cargando.style.display = "none";
       document.getElementById("btnActivar").style.display = "block";
       document.getElementById("btnActivar").setAttribute("href", URL_ACTIVAR);
@@ -97,7 +97,7 @@ h1 .em{ font-style:italic; color:var(--gold-l); }
     function intentar(reintento){
       fetch(ENDPOINT_OBTENER, {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ email: email })
+        body: JSON.stringify({ email: email, transaction: transaction })
       }).then(function(r){ return r.json(); }).then(function(data){
         if (data && data.ok && data.encontrado) {
           mostrarTodo(data);
@@ -105,22 +105,24 @@ h1 .em{ font-style:italic; color:var(--gold-l); }
           // El webhook puede tardar unos segundos en generar el código
           setTimeout(function(){ intentar(reintento+1); }, 2500);
         } else {
-          // No se encontró aún: dejar entrar a /activar manual con el email
+          // No se encontró aún: dejar entrar a /activar manual
           cargando.style.display = "none";
           var b = document.getElementById("btnActivar");
           b.style.display = "block";
-          b.setAttribute("href", URL_ACTIVAR + "?email=" + encodeURIComponent(email));
+          b.setAttribute("href", email ? (URL_ACTIVAR + "?email=" + encodeURIComponent(email)) : URL_ACTIVAR);
         }
       }).catch(function(){
         cargando.style.display = "none";
         var b = document.getElementById("btnActivar");
         b.style.display = "block";
-        b.setAttribute("href", URL_ACTIVAR + "?email=" + encodeURIComponent(email));
+        b.setAttribute("href", email ? (URL_ACTIVAR + "?email=" + encodeURIComponent(email)) : URL_ACTIVAR);
       });
     }
 
     function mostrarTodo(d){
       cargando.style.display = "none";
+      // el email puede venir del backend (si entramos por transaction)
+      var emailFinal = d.email || email;
       // saludo con nombre
       if (d.nombre) saludo.textContent = "Hola " + d.nombre.split(" ")[0] + ", tu acceso al Módulo PRO está activo.";
       // viaje
@@ -135,7 +137,7 @@ h1 .em{ font-style:italic; color:var(--gold-l); }
       }
       // botón activar con email + código precargados (un clic, sin escribir)
       var b = document.getElementById("btnActivar");
-      var url = URL_ACTIVAR + "?email=" + encodeURIComponent(email);
+      var url = URL_ACTIVAR + "?email=" + encodeURIComponent(emailFinal);
       if (d.codigo) url += "&codigo=" + encodeURIComponent(d.codigo);
       b.setAttribute("href", url);
       b.style.display = "block";
@@ -152,4 +154,5 @@ h1 .em{ font-style:italic; color:var(--gold-l); }
   })();
 </script>
 </body></html>
+
 
