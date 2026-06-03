@@ -15,8 +15,8 @@
 
 window.BIOSCAN_CONFIG = {
   // --- Supabase (publico, protegido por RLS) ---
-  SUPABASE_URL: "https://TU_PROYECTO.supabase.co",
-  SUPABASE_ANON_KEY: "TU_ANON_KEY_PUBLICA",
+  SUPABASE_URL: "https://eiugtjmjkojuatliooql.supabase.co",
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdWd0am1qa29qdWF0bGlvb3FsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMzg3MjcsImV4cCI6MjA5NDYxNDcyN30.2LNqBbBFb4qGeX_SpEd32e2l8qv7B2ncC9f9BfVY-r4",
 
   // --- Endpoint de la Netlify Function del algoritmo ---
   // En produccion Netlify lo sirve automaticamente en esta ruta:
