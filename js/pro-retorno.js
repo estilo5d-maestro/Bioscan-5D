@@ -159,7 +159,13 @@
 
     // Regla 2 + 3: ¿se muestra el botón de repetir?
     // No se muestra si: es comprador (R2) o llegó al límite (R3).
+    // La consulta se dispara automáticamente la primera vez que se evalúa (sin watchers).
     app.puedeRepetirReal = function () {
+      // Disparar la consulta una sola vez, de forma perezosa y segura
+      if (!this.estadoDiag.cargado && !this._consultandoEstado) {
+        this._consultandoEstado = true;
+        this.consultarEstadoDiag();
+      }
       if (!this.estadoDiag.cargado) return false; // hasta saber, no mostrar (seguro)
       return this.estadoDiag.puedeRepetir;
     };
@@ -184,19 +190,15 @@
       if (typeof this.repetirBioScan === "function") this.repetirBioScan();
     };
 
-    // Envolver init() para vigilar cuándo se llega al resultado y consultar el estado
-    const initOriginal = app.init ? app.init.bind(app) : null;
-    app.init = function () {
-      if (initOriginal) initOriginal();
-      // Cuando el estado pase a "resultado", consultar el estado del diagnóstico (Reglas 2 y 3)
-      this.$watch("estado", (nuevo) => {
-        if (nuevo === "resultado") { this.consultarEstadoDiag(); }
-      });
-    };
+    // Consulta el estado del diagnóstico de forma segura (Reglas 2 y 3).
+    // Se llama desde recuperarPorEmail (retorno) y puede llamarse tras calcular.
+    // NO usamos $watch ni envolvemos init() para no interferir con el ciclo de Alpine.
 
     return app;
   };
 })();
+
+
 
 
 
