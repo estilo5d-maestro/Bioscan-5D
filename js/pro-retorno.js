@@ -9,12 +9,15 @@
    ACTIVACIÓN: solo se enciende con ?pro=1 en la URL (o cuando
    MODO_PRO_SIEMPRE = true, que activaremos el 4 de junio).
    Mientras tanto, el sitio se comporta EXACTAMENTE como hoy.
+
+   NOTA: No usa $watch ni envuelve init() — extiende el objeto de
+   forma plana para no interferir con el ciclo de vida de Alpine.
    ============================================================ */
 (function () {
   // ⚙️ El 4 de junio: cambiar a true para encender el modo PRO para todos.
   const MODO_PRO_SIEMPRE = false;
 
-  // URL de la página de venta (ajustar cuando se publique)
+  // URL de la página de venta
   const URL_VENTA_PRO = "/transformacion-pro";
 
   function modoProActivo() {
@@ -26,7 +29,6 @@
   const cfg = window.BIOSCAN_CONFIG || {};
   const ENDPOINT_RECUPERAR = cfg.ENDPOINT_RECUPERAR || "/api/recuperar-diagnostico";
 
-  // Extiende la fábrica bioscanApp con las capacidades PRO
   const baseFactory = window.bioscanApp;
   if (typeof baseFactory !== "function") {
     console.warn("pro-retorno: bioscanApp no encontrado");
@@ -38,10 +40,6 @@
 
     // ----- estado PRO -----
     app.modoPro = modoProActivo();
-    app.urlVentaPro = URL_VENTA_PRO;
-    app.retornoEmail = "";
-    app.retornoCargando = false;
-    app.retornoError = null;
     app.urlVentaPro = URL_VENTA_PRO;
     app.retornoEmail = "";
     app.retornoCargando = false;
@@ -107,8 +105,7 @@
         this.perfilActualData = this.perfiles[data.perfil_actual];
         this.perfilDestinoData = this.perfiles[data.perfil_destino];
         this.estado = "resultado";
-        // Redibujar el radar cuando el DOM esté listo
-        this.$nextTick(() => { if (this.dibujarRadar) this.dibujarRadar(); });
+        if (this.$nextTick) this.$nextTick(() => { if (this.dibujarRadar) this.dibujarRadar(); });
       } catch (e) {
         this.retornoCargando = false;
         this.retornoError = "Hubo un problema. Intenta de nuevo.";
@@ -119,7 +116,6 @@
     // ----- el botón final: PRO o Umbral según el modo -----
     app.accionBotonFinal = function () {
       if (this.modoPro) {
-        // lleva a la página de venta, pasando el correo para prellenar el checkout luego
         const sep = this.urlVentaPro.indexOf("?") >= 0 ? "&" : "?";
         const url = this.usuario.email
           ? `${this.urlVentaPro}${sep}email=${encodeURIComponent(this.usuario.email)}`
@@ -130,73 +126,10 @@
       }
     };
 
-    // ===== CONTROL DE REPETICIONES (Reglas 2 y 3) =====
-    app.ENDPOINT_ESTADO = cfg.ENDPOINT_ESTADO || "/api/estado-diagnostico";
-    app.estadoDiag = { cargado: false, esComprador: false, diagnosticos: 0, limite: 2, puedeRepetir: true };
-    app.mostrarAvisoRepetir = false;
-
-    // Consulta el estado del email (cuántos diagnósticos, si es comprador)
-    app.consultarEstadoDiag = async function () {
-      const email = (this.usuario.email || "").toLowerCase().trim();
-      if (!email) return;
-      try {
-        const r = await fetch(this.ENDPOINT_ESTADO, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email })
-        });
-        const d = await r.json();
-        if (d) {
-          this.estadoDiag = {
-            cargado: true,
-            esComprador: !!d.esComprador,
-            diagnosticos: d.diagnosticos || 0,
-            limite: d.limite || 2,
-            puedeRepetir: d.puedeRepetir !== false
-          };
-        }
-      } catch (e) { console.warn("estado diag:", e.message); }
-    };
-
-    // Regla 2 + 3: ¿se muestra el botón de repetir?
-    // No se muestra si: es comprador (R2) o llegó al límite (R3).
-    // La consulta se dispara automáticamente la primera vez que se evalúa (sin watchers).
-    app.puedeRepetirReal = function () {
-      // Disparar la consulta una sola vez, de forma perezosa y segura
-      if (!this.estadoDiag.cargado && !this._consultandoEstado) {
-        this._consultandoEstado = true;
-        this.consultarEstadoDiag();
-      }
-      if (!this.estadoDiag.cargado) return false; // hasta saber, no mostrar (seguro)
-      return this.estadoDiag.puedeRepetir;
-    };
-
-    // Texto dinámico del aviso de última oportunidad (Regla 3)
-    app.textoAvisoRepetir = function () {
-      const restantes = this.estadoDiag.limite - this.estadoDiag.diagnosticos;
-      if (restantes <= 1) {
-        return "Esta es tu última oportunidad de repetir tu BioScan. El nuevo resultado reemplazará el anterior de forma definitiva. ¿Quieres continuar?";
-      }
-      return "Si repites tu BioScan, el nuevo resultado reemplazará el anterior. ¿Quieres continuar?";
-    };
-
-    // Intercepta el botón repetir: primero muestra el aviso
-    app.intentarRepetir = function () {
-      if (!this.puedeRepetirReal()) return;
-      this.mostrarAvisoRepetir = true;
-    };
-    app.cancelarRepetir = function () { this.mostrarAvisoRepetir = false; };
-    app.confirmarRepetir = function () {
-      this.mostrarAvisoRepetir = false;
-      if (typeof this.repetirBioScan === "function") this.repetirBioScan();
-    };
-
-    // Consulta el estado del diagnóstico de forma segura (Reglas 2 y 3).
-    // Se llama desde recuperarPorEmail (retorno) y puede llamarse tras calcular.
-    // NO usamos $watch ni envolvemos init() para no interferir con el ciclo de Alpine.
-
     return app;
   };
 })();
+
 
 
 
