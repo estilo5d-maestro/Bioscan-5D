@@ -80,7 +80,8 @@ function bioscanPro() {
         const res = await this._post(EP_ACTIVAR, { email, codigo, dispositivo: navigator.userAgent });
         this.cargando = false;
         if (!res || !res.ok) {
-          if (res && res.reason === "antes-de-fecha") { this.estado = "bloqueoFecha"; this.guardarSesion(email,codigo); return; }
+          // Ya NO bloqueamos por fecha del Umbral. La apertura del Día 1 (10-jun)
+          // se controla dentro del dashboard. La activación siempre lleva a "home".
           if (res && res.reason === "expirado") { this.estado = "expirado"; return; }
           if (silencioso) { this.borrarSesion(); this.estado = "activacion"; return; }
           this.error = (res && res.reason === "no-coincide") ? this.UI.activar.errorNoCoincide : this.UI.activar.errorGenerico;
@@ -308,6 +309,7 @@ function bioscanPro() {
   };
 }
 window.bioscanPro = bioscanPro;
+
 
 
 

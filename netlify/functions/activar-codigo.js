@@ -84,11 +84,11 @@ exports.handler = async function (event) {
     }
     const compra = filas[0];
 
-    // 2) Compuerta de fecha del Umbral
+    // 2) (Compuerta de fecha del Umbral ELIMINADA)
+    //    La activación ya NO se bloquea por fecha. El comprador entra al
+    //    dashboard apenas activa. La apertura del Día 1 (10-jun 5am) se
+    //    controla dentro del módulo (pro-app.js → FECHA_APERTURA_DIA1).
     const ahora = new Date();
-    if (ahora < new Date(FECHA_UMBRAL)) {
-      return { statusCode: 200, headers, body: JSON.stringify({ ok: false, reason: "antes-de-fecha", fecha: FECHA_UMBRAL }) };
-    }
 
     // 3) Primera activacion -> fijar expiracion. Si ya estaba activo, usar la existente.
     let expira = compra.fecha_expiracion ? new Date(compra.fecha_expiracion) : null;
@@ -166,5 +166,6 @@ exports.handler = async function (event) {
     return { statusCode: 200, headers, body: JSON.stringify({ ok: false, reason: "error", detalle: err.message }) };
   }
 };
+
 
 
