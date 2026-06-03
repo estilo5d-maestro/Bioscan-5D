@@ -44,5 +44,10 @@
 [[redirects]]
   from = "/api/obtener-codigo"
   to = "/.netlify/functions/obtener-codigo"
+  status = 200
+
+[[redirects]]
+  from = "/api/estado-diagnostico"
+  to = "/.netlify/functions/estado-diagnostico"
   status = 200    
 

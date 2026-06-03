@@ -42,6 +42,10 @@
     app.retornoEmail = "";
     app.retornoCargando = false;
     app.retornoError = null;
+    app.urlVentaPro = URL_VENTA_PRO;
+    app.retornoEmail = "";
+    app.retornoCargando = false;
+    app.retornoError = null;
 
     // Bullets teaser con íconos SVG naranja de línea (estilo pro)
     app.bulletsPro = [
@@ -126,7 +130,73 @@
       }
     };
 
+    // ===== CONTROL DE REPETICIONES (Reglas 2 y 3) =====
+    app.ENDPOINT_ESTADO = cfg.ENDPOINT_ESTADO || "/api/estado-diagnostico";
+    app.estadoDiag = { cargado: false, esComprador: false, diagnosticos: 0, limite: 2, puedeRepetir: true };
+    app.mostrarAvisoRepetir = false;
+
+    // Consulta el estado del email (cuántos diagnósticos, si es comprador)
+    app.consultarEstadoDiag = async function () {
+      const email = (this.usuario.email || "").toLowerCase().trim();
+      if (!email) return;
+      try {
+        const r = await fetch(this.ENDPOINT_ESTADO, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+        const d = await r.json();
+        if (d) {
+          this.estadoDiag = {
+            cargado: true,
+            esComprador: !!d.esComprador,
+            diagnosticos: d.diagnosticos || 0,
+            limite: d.limite || 2,
+            puedeRepetir: d.puedeRepetir !== false
+          };
+        }
+      } catch (e) { console.warn("estado diag:", e.message); }
+    };
+
+    // Regla 2 + 3: ¿se muestra el botón de repetir?
+    // No se muestra si: es comprador (R2) o llegó al límite (R3).
+    app.puedeRepetirReal = function () {
+      if (!this.estadoDiag.cargado) return false; // hasta saber, no mostrar (seguro)
+      return this.estadoDiag.puedeRepetir;
+    };
+
+    // Texto dinámico del aviso de última oportunidad (Regla 3)
+    app.textoAvisoRepetir = function () {
+      const restantes = this.estadoDiag.limite - this.estadoDiag.diagnosticos;
+      if (restantes <= 1) {
+        return "Esta es tu última oportunidad de repetir tu BioScan. El nuevo resultado reemplazará el anterior de forma definitiva. ¿Quieres continuar?";
+      }
+      return "Si repites tu BioScan, el nuevo resultado reemplazará el anterior. ¿Quieres continuar?";
+    };
+
+    // Intercepta el botón repetir: primero muestra el aviso
+    app.intentarRepetir = function () {
+      if (!this.puedeRepetirReal()) return;
+      this.mostrarAvisoRepetir = true;
+    };
+    app.cancelarRepetir = function () { this.mostrarAvisoRepetir = false; };
+    app.confirmarRepetir = function () {
+      this.mostrarAvisoRepetir = false;
+      if (typeof this.repetirBioScan === "function") this.repetirBioScan();
+    };
+
+    // Envolver init() para vigilar cuándo se llega al resultado y consultar el estado
+    const initOriginal = app.init ? app.init.bind(app) : null;
+    app.init = function () {
+      if (initOriginal) initOriginal();
+      // Cuando el estado pase a "resultado", consultar el estado del diagnóstico (Reglas 2 y 3)
+      this.$watch("estado", (nuevo) => {
+        if (nuevo === "resultado") { this.consultarEstadoDiag(); }
+      });
+    };
+
     return app;
   };
 })();
+
+
 

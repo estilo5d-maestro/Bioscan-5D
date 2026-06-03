@@ -366,8 +366,8 @@
                 </div>
               </template>
               <button class="btn-ghost" @click="descargarPDF()" x-text="UI.resultado.botonPDF"></button>
-              <template x-if="puedeRepetir()">
-                <button class="btn-ghost" @click="repetirBioScan()" x-text="UI.resultado.botonRepetir"></button>
+              <template x-if="puedeRepetirReal()">
+                <button class="btn-ghost" @click="intentarRepetir()" x-text="UI.resultado.botonRepetir"></button>
               </template>
               <div class="acceso-nota">
                 <span x-text="UI.resultado.acceso"></span><br>
@@ -381,6 +381,21 @@
           </div>
         </template>
 
+        <!-- AVISO de repetición (Regla 3) -->
+        <template x-if="mostrarAvisoRepetir">
+          <div class="aviso-overlay" @click.self="cancelarRepetir()">
+            <div class="aviso-card">
+              <div class="aviso-icono">⚠️</div>
+              <h3 class="aviso-titulo">Antes de repetir</h3>
+              <p class="aviso-texto" x-text="textoAvisoRepetir()"></p>
+              <div class="aviso-botones">
+                <button class="btn" @click="confirmarRepetir()">Sí, repetir mi BioScan</button>
+                <button class="btn-ghost" @click="cancelarRepetir()">Mejor no, conservar mi resultado</button>
+              </div>
+            </div>
+          </div>
+        </template>
+        
       </div>
     </div>
   </div>
