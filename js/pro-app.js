@@ -11,6 +11,25 @@ function bioscanPro() {
   const EP_PROGRESO = CFG.ENDPOINT_PROGRESO || "/api/progreso";
   const URL_UMBRAL = CFG.URL_UMBRAL || "https://www.5d.com.co/umbral-5d-01/";
   const LS_KEY = "bioscan_pro_v1";
+
+  /* ============================================================
+     APERTURA DEL DÍA 1 (lanzamiento por cohorte)
+     El plan se compra desde el 4-jun, pero el Día 1 se ABRE para
+     todos los pioneros el 10-jun a las 5:00 a.m. (hora Colombia).
+     Antes de esa fecha: la persona entra, ve su huella y el mapa
+     de 7 días (bloqueados), con un mensaje elegante de cuenta regresiva.
+     ------------------------------------------------------------
+     Para CAMBIAR la fecha de apertura: edita FECHA_APERTURA_DIA1.
+     Para que TÚ (Carlos) pruebes sin esperar: agrega ?preview=1
+     a la URL de /activar (te abre los días ignorando la fecha).
+     ============================================================ */
+  const FECHA_APERTURA_DIA1 = new Date("2026-06-10T05:00:00-05:00");
+  const ES_PREVIEW = new URLSearchParams(window.location.search).get("preview") === "1";
+  function dia1Abierto() {
+    if (ES_PREVIEW) return true;            // acceso anticipado para Carlos
+    return new Date() >= FECHA_APERTURA_DIA1;
+  }
+
   const NOMBRES = { MAGNETICO:"EL MAGNÉTICO", EJE:"EL EJE", PUENTE:"EL PUENTE", INALTERABLE:"EL INALTERABLE",
                     SOSTENEDOR:"EL SOSTENEDOR", CENTINELA:"EL CENTINELA", NOMADA:"EL NÓMADA", HABITADO:"EL HABITADO" };
 
@@ -130,6 +149,8 @@ function bioscanPro() {
     /* El siguiente día se habilita SOLO en una jornada posterior a la del último completado.
        Si completaste el Día 1 hoy, el Día 2 aparece mañana a las 5:00am. */
     get diaDisponible(){
+      // Compuerta de apertura por cohorte: nada se abre antes del 10-jun 5am.
+      if(!dia1Abierto()) return 0;          // 0 = ningún día disponible aún
       const u=this.ultimoCompletado;
       if(u>=7) return 7;                 // plan terminado
       if(u===0) return 1;                // nadie ha completado nada: Día 1 disponible
@@ -138,6 +159,17 @@ function bioscanPro() {
       const jHoy=this.jornada5am(new Date());
       const jUlt=this.jornada5am(fc);
       return jHoy>jUlt ? Math.min(u+1,7) : u; // nueva jornada -> libera el siguiente
+    },
+    /* ¿Aún no llega la fecha de apertura del Día 1? (para el mensaje de cuenta regresiva) */
+    get esperandoApertura(){ return !dia1Abierto(); },
+    get fechaAperturaTexto(){
+      // "miércoles 10 de junio a las 5:00 a.m."
+      try {
+        const f = FECHA_APERTURA_DIA1;
+        const dias = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+        const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+        return `${dias[f.getDay()]} ${f.getDate()} de ${meses[f.getMonth()]} a las 5:00 a.m.`;
+      } catch(e){ return "el 10 de junio a las 5:00 a.m."; }
     },
     /* ¿El próximo día está esperando a una jornada futura? (para el mensaje "vuelve mañana") */
     get esperandoProximaJornada(){
@@ -199,6 +231,8 @@ function bioscanPro() {
     pasos: ["concepto","tiny","core","reto","journal","celebracion"],
     abrirDia(n){
       const e=this.estadoDia(n);
+      // En pre-apertura (cohorte), un toque muestra el recordatorio elegante.
+      if(this.esperandoApertura){ this.avisoApertura=true; return; }
       if(e==="bloqueado" || e==="espera") return;
       this.diaActivo=n; this.pasoDia="concepto";
       const y=this.progreso.find(p=>p.dia_numero===n);
@@ -208,6 +242,8 @@ function bioscanPro() {
       this.journalResp=(y&&y.journal)?y.journal.slice(0,3).concat(["","",""]).slice(0,3):["","",""];
       this.resetTimer(); this.estado="dia"; window.scrollTo(0,0);
     },
+    avisoApertura: false,
+    cerrarAvisoApertura(){ this.avisoApertura=false; },
     get diaActual(){ return this.diaData(this.diaActivo); },
     avanzarPaso(){ const i=this.pasos.indexOf(this.pasoDia); if(i<this.pasos.length-1){this.pasoDia=this.pasos[i+1];window.scrollTo(0,0);} },
     get journalRespondido(){ return this.journalResp.filter(r=>(r||"").trim().length>2).length; },

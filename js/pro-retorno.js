@@ -126,10 +126,22 @@
       }
     };
 
+    // ----- AVISO de repetición (solo visual, sin restricción de límite) -----
+    app.mostrarAvisoRepetir = false;
+    app.intentarRepetir = function () {
+      this.mostrarAvisoRepetir = true;
+    };
+    app.cancelarRepetir = function () {
+      this.mostrarAvisoRepetir = false;
+    };
+    app.confirmarRepetir = function () {
+      this.mostrarAvisoRepetir = false;
+      if (typeof this.repetirBioScan === "function") this.repetirBioScan();
+    };
+
     return app;
   };
 })();
-
 
 
 
