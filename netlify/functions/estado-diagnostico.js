@@ -1,4 +1,4 @@
-* ============================================================
+/* ============================================================
    BIOSCAN 5D · netlify/functions/estado-diagnostico.js
    ------------------------------------------------------------
    Dado un email, devuelve el estado para controlar repeticiones:
@@ -16,20 +16,20 @@ const LIMITE_DIAGNOSTICOS = 2; // original + 1 repetición
 function sbHeaders(extra) {
   return Object.assign({ "Content-Type": "application/json", "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` }, extra || {});
 }
-async function sbCount(path) {
-  // Pide el count exacto vía header Prefer/Range
-  const r = await fetch(`${SB_URL}/rest/v1/${path}`, {
-    headers: sbHeaders({ "Prefer": "count=exact", "Range": "0-0" })
-  });
-  const cr = r.headers.get("content-range") || "";
-  // formato: "0-0/N" o "*/N"
-  const total = parseInt((cr.split("/")[1] || "0"), 10);
-  return isNaN(total) ? 0 : total;
-}
 async function sbGet(path) {
   const r = await fetch(`${SB_URL}/rest/v1/${path}`, { headers: sbHeaders() });
   if (!r.ok) throw new Error(`Supabase GET ${r.status}: ${await r.text()}`);
   return r.json();
+}
+// Cuenta filas trayendo solo los ids (simple y robusto; sin header Range que puede fallar)
+async function sbContar(path) {
+  try {
+    const filas = await sbGet(path);
+    return Array.isArray(filas) ? filas.length : 0;
+  } catch (e) {
+    console.warn("sbContar:", e.message);
+    return 0;
+  }
 }
 const enc = (v) => encodeURIComponent(v);
 
@@ -67,7 +67,7 @@ exports.handler = async function (event) {
     try {
       const users = await sbGet(`users?email=eq.${enc(email)}&select=id&limit=1`);
       if (users && users.length) {
-        diagnosticos = await sbCount(`diagnosticos?user_id=eq.${enc(users[0].id)}&select=id`);
+        diagnosticos = await sbContar(`diagnosticos?user_id=eq.${enc(users[0].id)}&select=id`);
       }
     } catch (e) { console.warn("count diagnosticos:", e.message); }
 

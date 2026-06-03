@@ -51,3 +51,7 @@
   to = "/.netlify/functions/estado-diagnostico"
   status = 200    
 
+[[redirects]]
+  from = "/api/health-check"
+  to = "/.netlify/functions/health-check"
+  status = 200
