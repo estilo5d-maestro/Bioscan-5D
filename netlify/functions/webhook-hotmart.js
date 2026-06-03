@@ -64,14 +64,18 @@ async function leerDiagnosticoVigente(email) {
     const ru = await fetch(`${base}/rest/v1/users?email=eq.${enc(email)}&select=id,nombre&limit=1`, { headers: h });
     const users = await ru.json();
     if (!users || !users.length) return null;
-    const rd = await fetch(`${base}/rest/v1/diagnosticos?user_id=eq.${enc(users[0].id)}&select=perfil_actual,perfil_destino,es_maestria&order=completado_at.desc&limit=1`, { headers: h });
+    const rd = await fetch(`${base}/rest/v1/diagnosticos?user_id=eq.${enc(users[0].id)}&select=perfil_actual,perfil_destino,es_maestria,score_eje1,score_eje2,score_eje3,score_eje4&order=completado_at.desc&limit=1`, { headers: h });
     const diag = await rd.json();
     if (!diag || !diag.length) return { nombre: users[0].nombre || "" };
     return {
       nombre: users[0].nombre || "",
       perfil_actual: diag[0].perfil_actual,
       perfil_destino: diag[0].perfil_destino,
-      es_maestria: !!diag[0].es_maestria
+      es_maestria: !!diag[0].es_maestria,
+      score_eje1: diag[0].score_eje1,
+      score_eje2: diag[0].score_eje2,
+      score_eje3: diag[0].score_eje3,
+      score_eje4: diag[0].score_eje4
     };
   } catch (e) {
     console.warn("No se pudo leer diagnostico para congelar:", e.message);
@@ -153,7 +157,11 @@ exports.handler = async function (event) {
           nombre: (diagCongelado && diagCongelado.nombre) || nombre || "",
           perfil_actual: diagCongelado ? diagCongelado.perfil_actual : null,
           perfil_destino: diagCongelado ? diagCongelado.perfil_destino : null,
-          es_maestria: diagCongelado ? diagCongelado.es_maestria : false
+          es_maestria: diagCongelado ? diagCongelado.es_maestria : false,
+          score_eje1: diagCongelado ? diagCongelado.score_eje1 : null,
+          score_eje2: diagCongelado ? diagCongelado.score_eje2 : null,
+          score_eje3: diagCongelado ? diagCongelado.score_eje3 : null,
+          score_eje4: diagCongelado ? diagCongelado.score_eje4 : null
         });
         registro = res[0];
         break;
@@ -194,5 +202,6 @@ exports.handler = async function (event) {
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 };
+
 
 

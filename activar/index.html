@@ -110,6 +110,9 @@
             <div class="pro-card">
               <div class="pro-card-label" x-text="UI.home.huellaLabel"></div>
               <div class="radar-wrap"><canvas id="radarPro"></canvas></div>
+              <template x-if="progreso.length === 0">
+                <div class="huella-inicio">Esta es tu huella de partida. Cada día que completes, la verás crecer.</div>
+              </template>
             </div>
 
             <!-- camino -->
@@ -291,6 +294,7 @@
 
   <script src="/js/config.js"></script>
   <script src="/js/plan-data.js"></script>
+  <script src="/js/pro-pdf.js"></script>
   <script src="/js/pro-app.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script>
@@ -298,3 +302,4 @@
   </script>
 </body>
 </html>
+

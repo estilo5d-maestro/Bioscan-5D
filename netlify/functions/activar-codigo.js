@@ -18,7 +18,7 @@
    5) devuelve perfil (de su diagnostico) + dias completados
    ============================================================ */
 
-const FECHA_UMBRAL = "2026-05-30T18:00:00-05:00"; // ⚠️ DEBE coincidir con FECHA_UMBRAL de /js/config.js
+const FECHA_UMBRAL = "2026-06-04T18:00:00-05:00"; // ⚠️ DEBE coincidir con FECHA_UMBRAL de /js/config.js
 const DIAS_ACCESO = 30;
 
 const SB_URL = process.env.SUPABASE_URL;
@@ -107,25 +107,38 @@ exports.handler = async function (event) {
       return { statusCode: 200, headers, body: JSON.stringify({ ok: false, reason: "expirado", expiraAt: expira.toISOString() }) };
     }
 
-    // 5) Recuperar el perfil del diagnostico (por email -> user -> ultimo diagnostico)
+    // 5) Perfil del comprador. PRIORIDAD: el CONGELADO en compradores_pro (coherencia).
+    //    Solo si la compra es vieja (sin congelar), se cae al último diagnóstico.
     let perfil = { perfilActual: null, perfilDestino: null, esMaestria: false, scoresDia0: null, nombre: compra.nombre || "" };
-    try {
-      const users = await sbGet(`users?email=eq.${enc(email)}&select=id,nombre&limit=1`);
-      if (users && users.length) {
-        if (!perfil.nombre) perfil.nombre = users[0].nombre || "";
-        const diag = await sbGet(
-          `diagnosticos?user_id=eq.${enc(users[0].id)}&select=perfil_actual,perfil_destino,es_maestria,score_eje1,score_eje2,score_eje3,score_eje4&order=completado_at.desc&limit=1`
-        );
-        if (diag && diag.length) {
-          const d = diag[0];
-          perfil.perfilActual = d.perfil_actual;
-          perfil.perfilDestino = d.perfil_destino;
-          perfil.esMaestria = !!d.es_maestria;
-          perfil.scoresDia0 = { eje1: d.score_eje1, eje2: d.score_eje2, eje3: d.score_eje3, eje4: d.score_eje4 };
-        }
+
+    if (compra.perfil_actual && compra.perfil_destino) {
+      // Perfil congelado al comprar — la verdad inmutable del comprador
+      perfil.perfilActual = compra.perfil_actual;
+      perfil.perfilDestino = compra.perfil_destino;
+      perfil.esMaestria = !!compra.es_maestria;
+      if (compra.score_eje1 != null) {
+        perfil.scoresDia0 = { eje1: compra.score_eje1, eje2: compra.score_eje2, eje3: compra.score_eje3, eje4: compra.score_eje4 };
       }
-    } catch (e) {
-      console.warn("No se pudo recuperar diagnostico:", e.message);
+    }
+
+    // Fallback: compra vieja sin perfil congelado → leer del diagnóstico
+    if (!perfil.perfilActual || !perfil.scoresDia0) {
+      try {
+        const users = await sbGet(`users?email=eq.${enc(email)}&select=id,nombre&limit=1`);
+        if (users && users.length) {
+          if (!perfil.nombre) perfil.nombre = users[0].nombre || "";
+          const diag = await sbGet(
+            `diagnosticos?user_id=eq.${enc(users[0].id)}&select=perfil_actual,perfil_destino,es_maestria,score_eje1,score_eje2,score_eje3,score_eje4&order=completado_at.desc&limit=1`
+          );
+          if (diag && diag.length) {
+            const d = diag[0];
+            if (!perfil.perfilActual) { perfil.perfilActual = d.perfil_actual; perfil.perfilDestino = d.perfil_destino; perfil.esMaestria = !!d.es_maestria; }
+            if (!perfil.scoresDia0) perfil.scoresDia0 = { eje1: d.score_eje1, eje2: d.score_eje2, eje3: d.score_eje3, eje4: d.score_eje4 };
+          }
+        }
+      } catch (e) {
+        console.warn("No se pudo recuperar diagnostico (fallback):", e.message);
+      }
     }
 
     // 6) Recuperar dias ya completados
@@ -153,4 +166,5 @@ exports.handler = async function (event) {
     return { statusCode: 200, headers, body: JSON.stringify({ ok: false, reason: "error", detalle: err.message }) };
   }
 };
+
 
