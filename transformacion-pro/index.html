@@ -77,6 +77,26 @@ img{ max-width:100%; display:block; }
 .testi .a{ font-size:11.5px; color:var(--dim); margin-top:12px; letter-spacing:.5px; }
 .volver{ display:block; text-align:center; padding:0 0 40px; }
 .volver a{ font-size:12.5px; color:var(--dim); text-decoration:underline; text-underline-offset:3px; }
+/* Casilla de aceptación del Pacto */
+.pacto-check{ display:flex; align-items:flex-start; gap:9px; max-width:380px; margin:14px auto 0; padding:10px 12px; border-radius:12px; cursor:pointer; transition:background .3s, box-shadow .3s; }
+.pacto-check input{ margin-top:2px; width:17px; height:17px; accent-color:#EF5036; flex-shrink:0; cursor:pointer; }
+.pacto-check span{ font-size:12.5px; line-height:1.5; color:#bdbdc4; text-align:left; }
+.pacto-check a{ color:#EF5036; text-decoration:underline; }
+.pacto-resaltar{ background:rgba(239,80,54,0.12); box-shadow:0 0 0 1px rgba(239,80,54,0.5); }
+.cta-disabled{ opacity:.45; pointer-events:auto; cursor:not-allowed; filter:grayscale(0.3); }
+.pacto-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.82); backdrop-filter:blur(6px); z-index:2000; display:none; align-items:center; justify-content:center; padding:22px; }
+.pacto-overlay.abierto{ display:flex; }
+.pacto-modal{ position:relative; max-width:560px; width:100%; max-height:88vh; overflow-y:auto; background:linear-gradient(165deg,#16100e,#0b0b0d); border:1px solid rgba(201,162,39,0.3); border-radius:22px; padding:32px 28px; }
+.pacto-cerrar{ position:absolute; top:14px; right:16px; background:none; border:none; color:#9a9aa0; font-size:28px; line-height:1; cursor:pointer; }
+.pacto-titulo{ font-family:'Fraunces',serif; font-size:23px; font-weight:600; color:#E8C75A; margin:0 0 12px; }
+.pacto-intro{ font-size:14px; color:#C8C8CC; line-height:1.6; margin:0 0 20px; }
+.pacto-cols{ display:flex; gap:22px; flex-wrap:wrap; }
+.pacto-col{ flex:1; min-width:200px; }
+.pacto-sub{ font-size:13px; font-weight:700; color:#EF5036; margin-bottom:10px; text-transform:uppercase; letter-spacing:.04em; }
+.pacto-col ul{ margin:0; padding-left:18px; }
+.pacto-col li{ font-size:13px; color:#C8C8CC; line-height:1.5; margin-bottom:8px; }
+.pacto-cierre{ font-size:13.5px; color:#E8C75A; font-style:italic; text-align:center; margin:22px 0 18px; }
+.pacto-modal .cta{ width:100%; }
 </style></head>
 <body><div class="wrap">
 
@@ -125,7 +145,11 @@ img{ max-width:100%; display:block; }
       <div class="ahora"><span class="cur">$</span>7<span class="usd"> USD</span></div>
       <div class="sub-precio">Acceso completo al Módulo PRO</div>
       <div class="pioneros">★ Sé uno de los primeros 20 Pioneros 5D<br>y vive la herramienta con todo su poder</div>
-      <a class="cta" id="ctaCheckout" href="#">QUIERO SER PIONERO 5D →</a>
+      <a class="cta cta-disabled" id="ctaCheckout" href="#">QUIERO SER PIONERO 5D →</a>
+      <label class="pacto-check">
+        <input type="checkbox" id="aceptaPacto">
+        <span>Acepto el <a href="#" id="verPacto">Pacto del Pionero</a>: vivir el plan de 7 días y aportar mi feedback (2 encuestas breves + 1 entrevista de 20 min).</span>
+      </label>
       <div class="cta-nota">Acceso inmediato · Comienza tu plan hoy</div>
     </div>
     <div class="garantia"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg><span>Creado por 5D · 23 años en ergonomía y bienestar</span></div>
@@ -137,6 +161,37 @@ img{ max-width:100%; display:block; }
   </section>
 
   <div class="volver"><a href="#" onclick="if(history.length>1){history.back();return false;}else{window.location.href='/';return false;}">‹ Volver a mi diagnóstico</a></div>
+
+  <!-- MODAL: Pacto del Pionero -->
+  <div class="pacto-overlay" id="pactoOverlay">
+    <div class="pacto-modal">
+      <button class="pacto-cerrar" id="pactoCerrar" aria-label="Cerrar">×</button>
+      <h3 class="pacto-titulo">El Pacto del Pionero 5D</h3>
+      <p class="pacto-intro">No compras un producto. Aceptas una misión. Eres de las primeras 20 personas en vivir el Módulo PRO, y tu experiencia ayudará a perfeccionarlo.</p>
+      <div class="pacto-cols">
+        <div class="pacto-col">
+          <div class="pacto-sub">✨ Lo que recibes</div>
+          <ul>
+            <li>Acceso completo al plan de 7 días, personalizado para tu perfil.</li>
+            <li>Acceso al círculo privado de Pioneros 5D.</li>
+            <li>Precio preferencial de por vida en la versión definitiva.</li>
+            <li>Tu voz en el producto: eres co-creador.</li>
+          </ul>
+        </div>
+        <div class="pacto-col">
+          <div class="pacto-sub">🌱 Lo que te pedimos</div>
+          <ul>
+            <li>Vivir el plan con honestidad y constancia.</li>
+            <li>Responder 2 encuestas breves (menos de 5 min cada una).</li>
+            <li>Una entrevista corta de 20 minutos la semana siguiente.</li>
+            <li>Compartir tu feedback espontáneo en el grupo.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="pacto-cierre">Un intercambio justo entre quien construye y quien se atreve a ir primero.</p>
+      <button class="cta" id="pactoAceptar">Acepto y quiero ser Pionero</button>
+    </div>
+  </div>
 
 </div>
 
@@ -158,9 +213,41 @@ img{ max-width:100%; display:block; }
     if (CUPON) q.push("offDiscount=" + encodeURIComponent(CUPON));
     if (email) q.push("email=" + encodeURIComponent(email));
     if (q.length) url += sep + q.join("&");
-    document.getElementById("ctaCheckout").setAttribute("href", url);
+    var cta = document.getElementById("ctaCheckout");
+    cta.setAttribute("href", url);
+
+    // ── Casilla obligatoria del Pacto + modal ──────────────────
+    var check = document.getElementById("aceptaPacto");
+    var overlay = document.getElementById("pactoOverlay");
+
+    function sincronizarBoton(){
+      if (check.checked) { cta.classList.remove("cta-disabled"); }
+      else { cta.classList.add("cta-disabled"); }
+    }
+    sincronizarBoton();
+    check.addEventListener("change", sincronizarBoton);
+
+    // El botón solo funciona si el pacto está aceptado
+    cta.addEventListener("click", function(e){
+      if (!check.checked) {
+        e.preventDefault();
+        // resaltar la casilla para guiar al usuario
+        var lbl = document.querySelector(".pacto-check");
+        if (lbl) { lbl.classList.add("pacto-resaltar"); setTimeout(function(){ lbl.classList.remove("pacto-resaltar"); }, 1400); }
+      }
+    });
+
+    // Abrir/cerrar modal del Pacto
+    document.getElementById("verPacto").addEventListener("click", function(e){ e.preventDefault(); overlay.classList.add("abierto"); });
+    document.getElementById("pactoCerrar").addEventListener("click", function(){ overlay.classList.remove("abierto"); });
+    overlay.addEventListener("click", function(e){ if (e.target === overlay) overlay.classList.remove("abierto"); });
+    // "Acepto" dentro del modal: marca la casilla y cierra
+    document.getElementById("pactoAceptar").addEventListener("click", function(){
+      check.checked = true;
+      sincronizarBoton();
+      overlay.classList.remove("abierto");
+    });
   })();
 </script>
 </body></html>
-
 
