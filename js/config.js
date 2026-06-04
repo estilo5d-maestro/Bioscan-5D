@@ -26,8 +26,10 @@ window.BIOSCAN_CONFIG = {
   // (se construye en el Sub-mensaje 2.3; por ahora dejamos la ruta lista)
   ENDPOINT_RDSTATION: "/.netlify/functions/enviar-rdstation",
 
+  ENDPOINT_ESTADO: "/api/estado-diagnostico",
+
   // --- Fecha del Umbral (para logica de fechas del modulo PRO) ---
-  FECHA_UMBRAL: "2026-06-04T18:00:00-05:00",
+  FECHA_UMBRAL: "2026-05-30T18:00:00-05:00",
 
   // --- URL de inscripcion al Umbral (acceso abierto) ---
   URL_UMBRAL: "https://www.5d.com.co/umbral-5d-01/",
@@ -37,6 +39,7 @@ window.BIOSCAN_CONFIG = {
   // Coinciden con los redirects de netlify.toml.
   // ============================================================
   ENDPOINT_ACTIVAR: "/api/activar-codigo",
+  ENDPOINT_RECUPERAR: "/api/recuperar-diagnostico",
   ENDPOINT_PROGRESO: "/api/progreso"
 };
 

@@ -36,3 +36,22 @@
   to = "/.netlify/functions/progreso"
   status = 200
 
+[[redirects]]
+  from = "/api/recuperar-diagnostico"
+  to = "/.netlify/functions/recuperar-diagnostico"
+  status = 200
+
+[[redirects]]
+  from = "/api/obtener-codigo"
+  to = "/.netlify/functions/obtener-codigo"
+  status = 200
+
+[[redirects]]
+  from = "/api/estado-diagnostico"
+  to = "/.netlify/functions/estado-diagnostico"
+  status = 200    
+
+[[redirects]]
+  from = "/api/health-check"
+  to = "/.netlify/functions/health-check"
+  status = 200

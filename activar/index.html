@@ -92,8 +92,7 @@
         </template>
 
         <!-- HOME -->
-        <template x-if="estado==='home'">
-          <div class="pro-home anim-card">
+        <div class="pro-home anim-card" x-show="estado==='home'">
             <div class="pro-header">
               <div>
                 <div class="pro-saludo"><span x-text="UI.home.saludo"></span>, <strong x-text="sesion.nombre || 'BioScanner'"></strong></div>
@@ -110,10 +109,27 @@
             <div class="pro-card">
               <div class="pro-card-label" x-text="UI.home.huellaLabel"></div>
               <div class="radar-wrap"><canvas id="radarPro"></canvas></div>
+              <template x-if="progreso.length === 0">
+                <div class="huella-inicio">Esta es tu huella de partida. Cada día que completes, la verás crecer.</div>
+              </template>
             </div>
 
             <!-- camino -->
             <div class="pro-card-label mt" x-text="UI.home.diasLabel"></div>
+
+            <!-- BANNER de pre-apertura (cohorte): visible antes del 10-jun -->
+            <template x-if="esperandoApertura">
+              <div class="apertura-banner">
+                <div class="ab-icono">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="13" r="8"/><path d="M12 13V9M12 1h0M9 1h6M19 4l-1.5 1.5"/>
+                  </svg>
+                </div>
+                <div class="ab-titulo">Tu viaje comienza el <span x-text="fechaAperturaTexto"></span></div>
+                <div class="ab-texto">Tu acceso ya está activo. Aquí vivirás tus 7 días. Mientras tanto, <strong>descarga tu guía en PDF</strong> y prepárate: el Día 1 se abrirá puntual para todos los Pioneros 5D.</div>
+              </div>
+            </template>
+
             <div class="camino-progreso">
               <div class="cp-bar"><div class="cp-fill" :style="`width:${progresoGeneral}%`"></div></div>
               <div class="cp-pct" x-text="progresoGeneral + '%'"></div>
@@ -161,7 +177,6 @@
             </div>
             <img class="logo-5d-final" src="https://cdn.shopify.com/s/files/1/0952/6060/6762/files/Logo_-_5D_-_Con_Borde_Redondo_Blanco.png?v=1774043494" alt="5D">
           </div>
-        </template>
 
         <!-- DÍA -->
         <template x-if="estado==='dia' && diaActual">
@@ -284,6 +299,19 @@
 
           </div>
         </template>
+
+        <!-- AVISO de apertura (cohorte): al tocar un día antes del 10-jun -->
+        <div class="aviso-overlay" x-show="avisoApertura" @click.self="cerrarAvisoApertura()" style="display:none;">
+            <div class="aviso-card">
+              <div class="aviso-icono">🌅</div>
+              <h3 class="aviso-titulo">Tu Día 1 está por comenzar</h3>
+              <p class="aviso-texto">El viaje de los Pioneros 5D se abre el <strong x-text="fechaAperturaTexto"></strong>. Todos empezamos juntos. Mientras tanto, descarga tu guía en PDF y prepárate para el Día 1.</p>
+              <div class="aviso-botones">
+                <button class="btn" @click="cerrarAvisoApertura()">Entendido</button>
+                <button class="btn-ghost" @click="descargarInstructivo()">Ver mi guía en PDF</button>
+              </div>
+            </div>
+        </div>
 
       </div>
     </div>

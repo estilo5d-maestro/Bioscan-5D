@@ -21,23 +21,16 @@
 
       <div class="app-content" x-data="bioscanApp()" x-init="init()" x-cloak>
 
-        <!-- ===== ORBE + ANILLO NEÓN (filtros SVG nativos, glow real en iOS) ===== -->
         <div class="orb-container" :class="{compact: estado==='cuestionario' || estado==='revision'}">
-          <!-- Núcleo dorado palpitante (NO cambia entre estados) -->
           <div class="orb-core"><div class="orb-spark"></div></div>
-
-          <!-- SVG del anillo. viewBox fijo 132; r=58, circunferencia=364.4 -->
           <svg class="ring-svg" width="132" height="132" viewBox="0 0 132 132">
             <defs>
-              <!-- Gradiente naranja corporativo (marca BioScan) -->
               <linearGradient id="gradNaranja" x1="0" y1="0" x2="132" y2="132" gradientUnits="userSpaceOnUse">
                 <stop stop-color="#EF5036"/><stop offset="1" stop-color="#D13F26"/>
               </linearGradient>
-              <!-- Gradiente naranja + dorado (para el cálculo) -->
               <linearGradient id="gradMixto" x1="0" y1="0" x2="132" y2="132" gradientUnits="userSpaceOnUse">
                 <stop stop-color="#EF5036"/><stop offset="0.55" stop-color="#D13F26"/><stop offset="1" stop-color="#C9A227"/>
               </linearGradient>
-              <!-- Filtro de glow NEÓN real (iOS respeta feGaussianBlur) -->
               <filter id="glowNeon" x="-60%" y="-60%" width="220%" height="220%">
                 <feGaussianBlur stdDeviation="3.2" result="blur"/>
                 <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
@@ -46,49 +39,32 @@
                 <feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
               </filter>
             </defs>
-
-            <!-- Track base (siempre visible, tenue) -->
             <circle cx="66" cy="66" r="58" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3"/>
-
-            <!-- CUESTIONARIO: anillo se enciende progresivamente (naranja neón) -->
-            <template x-if="estado==='cuestionario'||estado==='revision'">
-              <g transform="rotate(-90 66 66)">
-                <!-- capa glow difuminada detrás -->
+            <g x-show="estado==='cuestionario'||estado==='revision'" transform="rotate(-90 66 66)">
                 <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradNaranja)" stroke-width="5"
                   stroke-linecap="round" filter="url(#glowNeon)"
                   stroke-dasharray="364.4" :stroke-dashoffset="364.4 - (364.4 * progresoAnillo/100)"
                   style="transition: stroke-dashoffset 0.7s cubic-bezier(.2,.8,.2,1)"/>
-                <!-- capa nítida delante -->
                 <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradNaranja)" stroke-width="3"
                   stroke-linecap="round"
                   stroke-dasharray="364.4" :stroke-dashoffset="364.4 - (364.4 * progresoAnillo/100)"
                   style="transition: stroke-dashoffset 0.7s cubic-bezier(.2,.8,.2,1)"/>
-              </g>
-            </template>
-
-            <!-- CÁLCULO: arco láser naranja+dorado que recorre el círculo encendiéndolo -->
-            <template x-if="estado==='calculo'">
-              <g class="laser-rotate">
+            </g>
+            <g x-show="estado==='calculo'" class="laser-rotate">
                 <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradMixto)" stroke-width="5"
                   stroke-linecap="round" filter="url(#glowNeon)" stroke-dasharray="80 284"/>
                 <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradMixto)" stroke-width="3"
                   stroke-linecap="round" stroke-dasharray="80 284"/>
-              </g>
-            </template>
-
-            <!-- RESULTADO: anillo 100% encendido en NARANJA corporativo, pulsando -->
-            <template x-if="estado==='resultado'">
-              <g class="ring-done">
+            </g>
+            <g x-show="estado==='resultado'" class="ring-done">
                 <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradNaranja)" stroke-width="5"
                   stroke-linecap="round" filter="url(#glowNeon)"/>
                 <circle cx="66" cy="66" r="58" fill="none" stroke="url(#gradNaranja)" stroke-width="3"
                   stroke-linecap="round"/>
-              </g>
-            </template>
+            </g>
           </svg>
         </div>
 
-        <!-- ===== BIENVENIDA ===== -->
         <template x-if="estado==='bienvenida'">
           <div class="step-card anim-card">
             <span class="sello" x-text="UI.bienvenida.sello"></span>
@@ -97,11 +73,32 @@
             <p class="parrafo" x-html="UI.bienvenida.parrafo2"></p>
             <p class="parrafo" x-text="UI.bienvenida.parrafo3"></p>
             <button class="btn" @click="irARegistro()" x-text="UI.bienvenida.boton"></button>
+            <template x-if="modoPro">
+              <button class="btn-ghost" @click="irARetorno()" style="margin-top:6px;">
+                ¿Ya hiciste tu BioScan? Ingresa tu correo →
+              </button>
+            </template>
             <div class="firma-tech" x-text="UI.bienvenida.respaldo"></div>
           </div>
         </template>
 
-        <!-- ===== REGISTRO ===== -->
+        <template x-if="estado==='retorno'">
+          <div class="step-card anim-card">
+            <span class="sello">TU BIOSCAN</span>
+            <h1 class="titulo">Bienvenido de vuelta</h1>
+            <p class="parrafo">Ingresa el correo con el que hiciste tu BioScan y te llevamos directo a tu resultado.</p>
+            <div class="form-box">
+              <template x-if="retornoError"><div class="error-msg" x-text="retornoError"></div></template>
+              <input type="email" class="input" placeholder="tu@correo.com" x-model="retornoEmail" :disabled="retornoCargando" @keydown.enter="recuperarPorEmail()">
+              <button class="btn" @click="recuperarPorEmail()" :disabled="retornoCargando">
+                <span x-show="!retornoCargando">Ver mi resultado</span>
+                <span x-show="retornoCargando"><div class="spinner"></div></span>
+              </button>
+              <button class="btn-ghost" @click="volverABienvenida()" style="margin-top:4px;">‹ Volver</button>
+            </div>
+          </div>
+        </template>
+
         <template x-if="estado==='registro'">
           <div class="step-card anim-card">
             <span class="sello" x-text="UI.registro.sello"></span>
@@ -124,7 +121,6 @@
           </div>
         </template>
 
-        <!-- ===== PREPARACION ===== -->
         <template x-if="estado==='preparacion'">
           <div class="step-card">
             <span class="sello" x-text="UI.preparacion.sello"></span>
@@ -140,10 +136,8 @@
           </div>
         </template>
 
-        <!-- ===== CUESTIONARIO ===== -->
         <template x-if="estado==='cuestionario'">
           <div class="step-card" style="position:relative;">
-            <!-- Transicion entre bloques -->
             <template x-if="mostrarTransicion">
               <div class="transicion">
                 <div class="trans-orb">
@@ -183,7 +177,6 @@
             <div class="q-bloque-titulo" x-text="bloqueTitulo"></div>
             <div class="q-counter">Pregunta <span x-text="indiceActual+1"></span> de <span x-text="totalPreguntas"></span></div>
 
-            <!-- Cuerpo de la pregunta con animacion de entrada/salida -->
             <div class="q-body" :class="qAnim">
               <div class="q-texto" x-text="preguntaActual.texto"></div>
               <template x-if="preguntaActual.tipo==='multi'">
@@ -210,20 +203,16 @@
           </div>
         </template>
 
-        <!-- ===== REVISION (desplegable, punto 4) ===== -->
         <template x-if="estado==='revision'">
           <div class="step-card anim-card">
             <span class="sello" x-text="UI.revision.sello"></span>
             <h1 class="titulo sm" x-text="UI.revision.titulo"></h1>
             <p class="parrafo" x-text="UI.revision.texto"></p>
-
             <button class="btn" @click="calcular()" x-text="UI.revision.boton"></button>
-
             <div class="rev-toggle" @click="toggleRevision()">
               <span x-text="revisionAbierta ? 'Ocultar mis respuestas' : 'Revisar mis respuestas'"></span>
               <svg class="rev-chevron" :class="{open:revisionAbierta}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
             </div>
-
             <div class="rev-panel" :style="revisionAbierta ? 'max-height:2000px' : 'max-height:0'">
               <template x-for="(p,i) in preguntas" :key="p.id">
                 <div class="rev-item">
@@ -235,12 +224,10 @@
                 </div>
               </template>
             </div>
-
             <div class="acceso-nota" x-text="UI.revision.nota"></div>
           </div>
         </template>
 
-        <!-- ===== CALCULO ===== -->
         <template x-if="estado==='calculo'">
           <div class="step-card">
             <h1 class="calc-titulo" x-text="UI.calculo.titulo"></h1>
@@ -248,17 +235,13 @@
           </div>
         </template>
 
-        <!-- ===== RESULTADO ===== -->
         <template x-if="estado==='resultado' && resultado">
           <div class="step-card anim-card" :style="`--accent:${accentColor}`" x-init="$nextTick(()=>dibujarRadar())">
-
             <div class="res-label" x-text="usuario.nombre + UI.resultado.revelacion1"></div>
             <div class="res-label" style="margin-bottom:18px;" x-text="UI.resultado.revelacion2"></div>
             <div class="res-label" x-text="UI.resultado.labelActual"></div>
             <div class="perfil-nombre" x-text="perfilActualData.nombre"></div>
             <div class="perfil-sub" x-text="perfilActualData.subtitulo"></div>
-
-            <!-- FELICITACION: todo perfil avanzado (punto 10) -->
             <template x-if="esAvanzado">
               <div class="felicitacion">
                 <span class="feli-badge">✨</span>
@@ -266,10 +249,7 @@
                 <span x-text="resultado.es_maestria ? perfilActualData.maestria : ('A diferencia de la mayoría, tu cuerpo ya habita un perfil avanzado. '+perfilActualData.subtitulo+'.')"></span>
               </div>
             </template>
-
             <div class="divisor"></div>
-
-            <!-- Bloques perfil ORIGEN -->
             <template x-if="!perfilActualData.es_destino">
               <div>
                 <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('patron')"></span>PATRÓN CARACTERÍSTICO</div><div class="bp-texto" x-text="perfilActualData.patron"></div></div>
@@ -279,20 +259,15 @@
                 <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('fortaleza')"></span>TU FORTALEZA</div><div class="bp-texto" x-text="perfilActualData.fortaleza"></div></div>
               </div>
             </template>
-            <!-- Bloques perfil AVANZADO actual -->
             <template x-if="perfilActualData.es_destino">
               <div>
                 <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('quien')"></span>QUIÉN ERES</div><div class="bp-texto" x-text="perfilActualData.quien_es"></div></div>
                 <div class="bloque-perfil"><div class="bp-titulo"><span x-html="icoRes('lograr')"></span>LO QUE VAS A LOGRAR</div><div class="bp-texto" x-text="perfilActualData.vas_a_lograr"></div></div>
               </div>
             </template>
-
-            <!-- Radar -->
             <div class="res-label" style="margin-top:18px;" x-text="UI.resultado.labelHuella"></div>
             <div class="radar-box"><canvas id="radarChart"></canvas></div>
             <p class="parrafo" style="font-size:13px;" x-text="UI.resultado.huellaTexto"></p>
-
-            <!-- Destino -->
             <div class="destino-card">
               <template x-if="!resultado.es_maestria">
                 <div>
@@ -311,29 +286,56 @@
                 </div>
               </template>
             </div>
-
-            <!-- Cierre -->
             <div class="cierre">
               <div class="cierre-titulo" x-text="UI.resultado.cierreTitulo"></div>
-              <p x-html="UI.resultado.cierreParrafo"></p>
-              <p x-text="UI.resultado.cierreParrafo2"></p>
+              <template x-if="!modoPro">
+                <div>
+                  <p x-html="UI.resultado.cierreParrafo"></p>
+                  <p x-text="UI.resultado.cierreParrafo2"></p>
+                </div>
+              </template>
+              <template x-if="modoPro">
+                <p x-text="'Tu diagnóstico revela quién eres hoy. Tu transformación empieza cuando decides hacia dónde ir.'"></p>
+              </template>
             </div>
-
             <div class="cta-wrap">
-              <button class="btn" @click="irAlUmbral()" x-text="UI.resultado.botonUmbral"></button>
+              <button class="btn" @click="accionBotonFinal()" x-text="modoPro ? 'Comienza tu transformación PRO' : UI.resultado.botonUmbral"></button>
+              <template x-if="modoPro">
+                <div class="pro-teaser">
+                  <template x-for="b in bulletsPro" :key="b.t">
+                    <div class="pt-item">
+                      <span class="pt-ico" x-html="b.ico"></span>
+                      <span x-text="b.t"></span>
+                    </div>
+                  </template>
+                </div>
+              </template>
               <button class="btn-ghost" @click="descargarPDF()" x-text="UI.resultado.botonPDF"></button>
               <template x-if="puedeRepetir()">
-                <button class="btn-ghost" @click="repetirBioScan()" x-text="UI.resultado.botonRepetir"></button>
+                <button class="btn-ghost" @click="intentarRepetir()" x-text="UI.resultado.botonRepetir"></button>
               </template>
               <div class="acceso-nota">
                 <span x-text="UI.resultado.acceso"></span><br>
                 <span x-text="UI.resultado.accesoPDF"></span>
               </div>
             </div>
-
-            <!-- Logo 5D final (punto 5) -->
             <img class="logo-5d-final" src="https://cdn.shopify.com/s/files/1/0952/6060/6762/files/Logo_-_5D_-_Con_Borde_Redondo_Blanco.png?v=1774043494" alt="5D">
             <div class="firma-marca" x-text="UI.resultado.firma"></div>
+          </div>
+        </template>
+
+        <!-- AVISO de repetición del BioScan (informativo) -->
+        <template x-if="mostrarAvisoRepetir">
+          <div class="aviso-overlay" @click.self="cancelarRepetir()">
+            <div class="aviso-card">
+              <div class="aviso-icono">⚠️</div>
+              <h3 class="aviso-titulo">Antes de repetir</h3>
+              <p class="aviso-texto">Si repites tu BioScan, tu nuevo resultado reemplazará el anterior. Al avanzar al Módulo PRO, tu diagnóstico queda fijado a tu última versión. ¿Quieres continuar?</p>
+              <div class="aviso-botones">
+                <button class="btn" @click="confirmarRepetir()">Sí, repetir mi BioScan</button>
+                <button class="btn-ghost" @click="cancelarRepetir()">Mejor no, conservar mi resultado</button>
+              </div>
+            </div>
           </div>
         </template>
 
@@ -347,7 +349,10 @@
   <script src="/js/supabase-client.js"></script>
   <script src="/js/pdf-generator.js"></script>
   <script src="/js/bioscan-app.js"></script>
+  <script src="/js/pro-retorno.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>
+
+
 

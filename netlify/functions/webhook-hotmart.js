@@ -53,6 +53,36 @@ async function supabaseInsert(table, row) {
   return JSON.parse(txt);
 }
 
+/* Lee el ULTIMO diagnostico de un email para CONGELARLO al comprar.
+   Asi el plan del comprador queda fijo, aunque luego repita el test. */
+async function leerDiagnosticoVigente(email) {
+  const base = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_KEY;
+  const h = { "apikey": key, "Authorization": `Bearer ${key}` };
+  const enc = encodeURIComponent;
+  try {
+    const ru = await fetch(`${base}/rest/v1/users?email=eq.${enc(email)}&select=id,nombre&limit=1`, { headers: h });
+    const users = await ru.json();
+    if (!users || !users.length) return null;
+    const rd = await fetch(`${base}/rest/v1/diagnosticos?user_id=eq.${enc(users[0].id)}&select=perfil_actual,perfil_destino,es_maestria,score_eje1,score_eje2,score_eje3,score_eje4&order=completado_at.desc&limit=1`, { headers: h });
+    const diag = await rd.json();
+    if (!diag || !diag.length) return { nombre: users[0].nombre || "" };
+    return {
+      nombre: users[0].nombre || "",
+      perfil_actual: diag[0].perfil_actual,
+      perfil_destino: diag[0].perfil_destino,
+      es_maestria: !!diag[0].es_maestria,
+      score_eje1: diag[0].score_eje1,
+      score_eje2: diag[0].score_eje2,
+      score_eje3: diag[0].score_eje3,
+      score_eje4: diag[0].score_eje4
+    };
+  } catch (e) {
+    console.warn("No se pudo leer diagnostico para congelar:", e.message);
+    return null;
+  }
+}
+
 async function rdConversion(payload) {
   const token = process.env.RD_STATION_TOKEN;
   if (!token) { console.warn("RD_STATION_TOKEN no configurado, omitiendo conversion"); return; }
@@ -110,7 +140,10 @@ exports.handler = async function (event) {
       return { statusCode: 400, body: JSON.stringify({ error: "Email del comprador no recibido" }) };
     }
 
-    // 6. Generar codigo unico (reintenta si hay colision con UNIQUE constraint)
+    // 6. Leer el diagnóstico VIGENTE para CONGELARLO con la compra (Regla 1: coherencia)
+    const diagCongelado = await leerDiagnosticoVigente(email);
+
+    // 7. Generar codigo unico (reintenta si hay colision con UNIQUE constraint)
     let codigo, registro;
     let intentos = 0;
     while (intentos < 5) {
@@ -120,7 +153,15 @@ exports.handler = async function (event) {
           email,
           codigo,
           codigo_usado: false,
-          hotmart_transaction: transaction
+          hotmart_transaction: transaction,
+          nombre: (diagCongelado && diagCongelado.nombre) || nombre || "",
+          perfil_actual: diagCongelado ? diagCongelado.perfil_actual : null,
+          perfil_destino: diagCongelado ? diagCongelado.perfil_destino : null,
+          es_maestria: diagCongelado ? diagCongelado.es_maestria : false,
+          score_eje1: diagCongelado ? diagCongelado.score_eje1 : null,
+          score_eje2: diagCongelado ? diagCongelado.score_eje2 : null,
+          score_eje3: diagCongelado ? diagCongelado.score_eje3 : null,
+          score_eje4: diagCongelado ? diagCongelado.score_eje4 : null
         });
         registro = res[0];
         break;
@@ -161,4 +202,6 @@ exports.handler = async function (event) {
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 };
+
+
 

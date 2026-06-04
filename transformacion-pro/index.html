@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#060606">
+<title>Transformación PRO · BioScan 5D</title>
+<meta name="description" content="Tu diagnóstico fue solo el comienzo. El Módulo PRO es tu camino de 7 días personalizado para transformar tu cuerpo y tu presencia.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{ --bg:#060606; --soft:#C2C2C8; --dim:#84848C; --gold:#C9A227; --gold-l:#E8C75A; --or:#D13F26; --or-l:#EF5036; --line:rgba(255,255,255,0.09); --serif:'Fraunces',serif; }
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{ font-family:'Inter',sans-serif; background:var(--bg); color:#F4F4F6; overflow-x:hidden; }
+.wrap{ max-width:460px; margin:0 auto; position:relative; }
+.serif{ font-family:var(--serif); }
+.kick{ font-size:10.5px; font-weight:800; letter-spacing:3px; color:var(--or-l); text-transform:uppercase; }
+img{ max-width:100%; display:block; }
+
+.hero{ position:relative; min-height:760px; display:flex; flex-direction:column; justify-content:flex-end; padding:0 26px 54px; text-align:center; }
+.hero-img{ position:absolute; inset:0; background-image:url('hero.jpg'); background-size:cover; background-position:center top; z-index:0; }
+.hero-fade{ position:absolute; inset:0; z-index:1; background:linear-gradient(180deg, rgba(6,6,6,0.55) 0%, rgba(6,6,6,0.1) 32%, rgba(6,6,6,0.15) 55%, rgba(6,6,6,0.85) 82%, var(--bg) 100%); }
+.hero-top{ position:absolute; top:30px; left:0; right:0; z-index:3; text-align:center; }
+.hero-top .marca{ font-size:11px; font-weight:800; letter-spacing:3px; color:#fff; opacity:.85; }
+.hero-top .marca b{ color:var(--or-l); }
+.hero-content{ position:relative; z-index:2; }
+.hero h1{ font-family:var(--serif); font-size:36px; font-weight:600; line-height:1.06; margin:12px 0 14px; }
+.hero h1 .em{ font-style:italic; color:var(--gold-l); }
+.hero p{ font-size:15px; color:var(--soft); line-height:1.6; max-width:370px; margin:0 auto; }
+.scroll-hint{ margin-top:26px; font-size:22px; color:var(--or-l); animation:bob 1.8s ease-in-out infinite; }
+@keyframes bob{ 0%,100%{transform:translateY(0);opacity:.6;} 50%{transform:translateY(6px);opacity:1;} }
+
+.prueba{ padding:50px 26px; text-align:center; }
+.device{ max-width:270px; margin:18px auto 0; border-radius:32px; border:1px solid var(--line); padding:8px; background:#0c0c0e; box-shadow:0 30px 80px rgba(0,0,0,0.6); position:relative; }
+.device::before{ content:""; position:absolute; inset:-1px; border-radius:32px; padding:1px; background:linear-gradient(160deg, rgba(239,80,54,0.55), transparent 38%); -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none; }
+.device img{ width:100%; border-radius:26px; }
+.prueba .cap{ font-size:12.5px; color:var(--dim); margin-top:18px; }
+
+.orbes-sec{ padding:54px 26px; text-align:center; }
+.orbes-sec h2{ font-family:var(--serif); font-size:27px; font-weight:600; margin-top:12px; line-height:1.15; }
+.orbes-sec h2 .em{ font-style:italic; color:var(--gold-l); }
+.orbes-img{ max-width:230px; margin:24px auto 0; }
+.orbes-sec p{ font-size:14.5px; color:var(--soft); line-height:1.6; max-width:360px; margin:24px auto 0; }
+
+.benef-sec{ padding:40px 22px 50px; }
+.sect-lbl{ text-align:center; font-size:10.5px; font-weight:800; letter-spacing:2.5px; color:var(--gold); text-transform:uppercase; margin-bottom:24px; }
+.bf{ display:flex; gap:15px; padding:18px; margin-bottom:13px; background:linear-gradient(160deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012)); border:1px solid var(--line); border-radius:17px; }
+.bf-ic{ flex-shrink:0; width:44px; height:44px; border-radius:13px; background:radial-gradient(circle at 35% 30%, rgba(239,80,54,0.22), rgba(209,63,38,0.06)); border:1px solid rgba(239,80,54,0.28); display:flex; align-items:center; justify-content:center; }
+.bf-ic svg{ width:22px; height:22px; stroke:var(--or-l); fill:none; stroke-width:1.6; }
+.bf-tx h3{ font-size:15.5px; font-weight:600; margin-bottom:4px; }
+.bf-tx p{ font-size:13px; color:var(--soft); line-height:1.5; }
+
+.emo{ position:relative; min-height:620px; display:flex; align-items:flex-end; justify-content:center; padding:0 26px 56px; text-align:center; }
+.emo-img{ position:absolute; inset:0; background-image:url('persona.jpg'); background-size:cover; background-position:center 20%; z-index:0; }
+.emo-fade{ position:absolute; inset:0; z-index:1; background:linear-gradient(180deg, var(--bg) 0%, rgba(6,6,6,0.25) 30%, rgba(6,6,6,0.4) 60%, rgba(6,6,6,0.92) 88%, var(--bg) 100%); }
+.emo-content{ position:relative; z-index:2; }
+.emo h2{ font-family:var(--serif); font-size:28px; font-weight:600; line-height:1.18; }
+.emo h2 .em{ font-style:italic; color:var(--gold-l); }
+
+.precio-sec{ padding:30px 24px 50px; }
+.precio-box{ text-align:center; padding:34px 24px; background:linear-gradient(165deg, rgba(201,162,39,0.10), rgba(239,80,54,0.045)); border:1px solid rgba(201,162,39,0.3); border-radius:24px; }
+.escasez{ display:inline-block; font-size:11px; font-weight:700; letter-spacing:1px; color:var(--or-l); text-transform:uppercase; padding:7px 15px; border:1px solid rgba(239,80,54,0.4); border-radius:20px; margin-bottom:18px; background:rgba(239,80,54,0.08); }
+.ancla{ font-size:15px; color:var(--dim); text-decoration:line-through; }
+.ahora{ font-family:var(--serif); font-size:58px; font-weight:700; line-height:1; margin:5px 0 2px; }
+.ahora .cur{ font-size:26px; vertical-align:super; color:var(--gold-l); }
+.ahora .usd{ font-size:20px; color:var(--soft); }
+.sub-precio{ font-size:13px; color:var(--soft); margin-top:8px; }
+.pioneros{ font-size:13px; color:var(--gold-l); font-weight:600; margin-top:16px; line-height:1.5; }
+.cta{ display:block; width:100%; text-align:center; padding:19px; margin-top:18px; border:none; border-radius:16px; background:linear-gradient(135deg, var(--or-l), var(--or)); color:#fff; font-size:16px; font-weight:700; letter-spacing:.4px; cursor:pointer; box-shadow:0 14px 38px rgba(239,80,54,0.42); font-family:inherit; text-decoration:none; transition:transform .15s; }
+.cta:active{ transform:scale(.98); }
+.cta-nota{ text-align:center; font-size:12px; color:var(--dim); margin-top:13px; }
+.garantia{ display:flex; align-items:center; justify-content:center; gap:8px; margin-top:24px; font-size:12px; color:var(--soft); text-align:center; }
+.garantia svg{ width:16px; height:16px; stroke:var(--gold); fill:none; stroke-width:1.6; flex-shrink:0; }
+.testi{ padding:10px 30px 56px; text-align:center; }
+.testi .q{ font-family:var(--serif); font-style:italic; font-size:18px; line-height:1.5; }
+.testi .a{ font-size:11.5px; color:var(--dim); margin-top:12px; letter-spacing:.5px; }
+.volver{ display:block; text-align:center; padding:0 0 40px; }
+.volver a{ font-size:12.5px; color:var(--dim); text-decoration:underline; text-underline-offset:3px; }
+/* Casilla de aceptación del Pacto */
+.pacto-check{ display:flex; align-items:flex-start; gap:9px; max-width:380px; margin:14px auto 0; padding:10px 12px; border-radius:12px; cursor:pointer; transition:background .3s, box-shadow .3s; }
+.pacto-check input{ margin-top:2px; width:17px; height:17px; accent-color:#EF5036; flex-shrink:0; cursor:pointer; }
+.pacto-check span{ font-size:12.5px; line-height:1.5; color:#bdbdc4; text-align:left; }
+.pacto-check a{ color:#EF5036; text-decoration:underline; }
+.pacto-resaltar{ background:rgba(239,80,54,0.12); box-shadow:0 0 0 1px rgba(239,80,54,0.5); }
+.cta-disabled{ opacity:.45; pointer-events:auto; cursor:not-allowed; filter:grayscale(0.3); }
+.pacto-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.82); backdrop-filter:blur(6px); z-index:2000; display:none; align-items:center; justify-content:center; padding:22px; }
+.pacto-overlay.abierto{ display:flex; }
+.pacto-modal{ position:relative; max-width:560px; width:100%; max-height:88vh; overflow-y:auto; background:linear-gradient(165deg,#16100e,#0b0b0d); border:1px solid rgba(201,162,39,0.3); border-radius:22px; padding:32px 28px; }
+.pacto-cerrar{ position:absolute; top:14px; right:16px; background:none; border:none; color:#9a9aa0; font-size:28px; line-height:1; cursor:pointer; }
+.pacto-titulo{ font-family:'Fraunces',serif; font-size:23px; font-weight:600; color:#E8C75A; margin:0 0 12px; }
+.pacto-intro{ font-size:14px; color:#C8C8CC; line-height:1.6; margin:0 0 20px; }
+.pacto-cols{ display:flex; gap:22px; flex-wrap:wrap; }
+.pacto-col{ flex:1; min-width:200px; }
+.pacto-sub{ font-size:13px; font-weight:700; color:#EF5036; margin-bottom:10px; text-transform:uppercase; letter-spacing:.04em; }
+.pacto-col ul{ margin:0; padding-left:18px; }
+.pacto-col li{ font-size:13px; color:#C8C8CC; line-height:1.5; margin-bottom:8px; }
+.pacto-cierre{ font-size:13.5px; color:#E8C75A; font-style:italic; text-align:center; margin:22px 0 18px; }
+.pacto-modal .cta{ width:100%; }
+</style></head>
+<body><div class="wrap">
+
+  <section class="hero">
+    <div class="hero-img"></div><div class="hero-fade"></div>
+    <div class="hero-top"><div class="marca">BIOSCAN 5D <b>· PRO</b></div></div>
+    <div class="hero-content">
+      <span class="kick">Tu diagnóstico fue solo el comienzo</span>
+      <h1 class="serif">Ya conoces tu cuerpo.<br>Ahora <span class="em">transfórmalo</span>.</h1>
+      <p>Saber qué patrón vives es el primer paso. Lo que sigue es el camino que convierte ese diagnóstico en un cambio real, medible y tuyo.</p>
+      <div class="scroll-hint">↓</div>
+    </div>
+  </section>
+
+  <section class="prueba">
+    <span class="kick">Esto se abre para ti</span>
+    <div class="device"><img src="dashboard.png" alt="Tu herramienta PRO"></div>
+    <p class="cap">Tu plan personalizado, tu huella que evoluciona, tu ritual diario.</p>
+  </section>
+
+  <section class="orbes-sec">
+    <span class="kick">El viaje</span>
+    <h2 class="serif">Siete días.<br>Siete <span class="em">aperturas</span>.</h2>
+    <div class="orbes-img"><img src="orbes.jpg" alt="Los 7 días"></div>
+    <p>Cada día se abre uno nuevo. No corres: lo habitas. Una práctica diaria, respaldada por la ciencia, que te lleva de donde estás a donde quieres llegar.</p>
+  </section>
+
+  <section class="benef-sec">
+    <div class="sect-lbl">Lo que vas a vivir</div>
+    <div class="bf"><div class="bf-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7l2.5 5L12 17l-2.5-5z"/></svg></div><div class="bf-tx"><h3>Un plan 100% personalizado</h3><p>No es un curso genérico. Se adapta a tu perfil exacto y al camino que tu diagnóstico reveló. Tuyo, de principio a fin.</p></div></div>
+    <div class="bf"><div class="bf-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"/><path d="M12 13V9M12 2v2M5 6L4 5M19 6l1-1"/></svg></div><div class="bf-tx"><h3>7 días, un ritual diario</h3><p>Cada mañana se abre un nuevo paso. Prácticas de 10 minutos respaldadas por la ciencia del comportamiento. Sin abrumarte.</p></div></div>
+    <div class="bf"><div class="bf-ic"><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 3 6-7"/><path d="M3 21h18"/></svg></div><div class="bf-tx"><h3>Mira tu transformación en vivo</h3><p>Tu huella corporal se expande con cada día. Ves —literalmente— cómo cambias del Día 0 al Día 7.</p></div></div>
+    <div class="bf"><div class="bf-ic"><svg viewBox="0 0 24 24"><path d="M12 3c2 4 5 5 5 9a5 5 0 01-10 0c0-2 1-3 2-4 0 1 1 2 2 2 0-3 1-5 1-7z"/></svg></div><div class="bf-tx"><h3>Rachas que te sostienen</h3><p>Logros y rachas que convierten la intención en hábito. El sistema te mantiene en movimiento, día tras día.</p></div></div>
+    <div class="bf"><div class="bf-ic"><svg viewBox="0 0 24 24"><path d="M4 13a8 8 0 0116 0M4 13v3a2 2 0 002 2h1v-5H6a2 2 0 00-2 2zM20 13v3a2 2 0 01-2 2h-1v-5h1a2 2 0 012 2z"/></svg></div><div class="bf-tx"><h3>Audios guiados + seguimiento</h3><p>Prácticas profundas con voz que te acompaña, y un seguimiento que sostiene tu cambio más allá de los 7 días.</p></div></div>
+  </section>
+
+  <section class="emo">
+    <div class="emo-img"></div><div class="emo-fade"></div>
+    <div class="emo-content"><h2 class="serif">No cambias en 7 días.<br>Empiezas a cambiar <span class="em">para siempre</span>.</h2></div>
+  </section>
+
+  <section class="precio-sec">
+    <div class="precio-box">
+      <div class="escasez">⚡ Solo 20 cupos de Fundador</div>
+      <div class="ancla">Valor regular $27 USD</div>
+      <div class="ahora"><span class="cur">$</span>7<span class="usd"> USD</span></div>
+      <div class="sub-precio">Acceso completo al Módulo PRO</div>
+      <div class="pioneros">★ Sé uno de los primeros 20 Pioneros 5D<br>y vive la herramienta con todo su poder</div>
+      <a class="cta cta-disabled" id="ctaCheckout" href="#">QUIERO SER PIONERO 5D →</a>
+      <label class="pacto-check">
+        <input type="checkbox" id="aceptaPacto">
+        <span>Acepto el <a href="#" id="verPacto">Pacto del Pionero</a>: vivir el plan de 7 días y aportar mi feedback (2 encuestas breves + 1 entrevista de 20 min).</span>
+      </label>
+      <div class="cta-nota">Acceso inmediato · Comienza tu plan hoy</div>
+    </div>
+    <div class="garantia"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg><span>Creado por 5D · 23 años en ergonomía y bienestar</span></div>
+  </section>
+
+  <section class="testi">
+    <p class="q">«Por primera vez sentí que mi cuerpo hablaba antes que yo. En 7 días cambió cómo entro a cada reunión.»</p>
+    <p class="a">— LUISA F. GONZÁLEZ</p>
+  </section>
+
+  <div class="volver"><a href="#" onclick="if(history.length>1){history.back();return false;}else{window.location.href='/';return false;}">‹ Volver a mi diagnóstico</a></div>
+
+  <!-- MODAL: Pacto del Pionero -->
+  <div class="pacto-overlay" id="pactoOverlay">
+    <div class="pacto-modal">
+      <button class="pacto-cerrar" id="pactoCerrar" aria-label="Cerrar">×</button>
+      <h3 class="pacto-titulo">El Pacto del Pionero 5D</h3>
+      <p class="pacto-intro">No compras un producto. Aceptas una misión. Eres de las primeras 20 personas en vivir el Módulo PRO, y tu experiencia ayudará a perfeccionarlo.</p>
+      <div class="pacto-cols">
+        <div class="pacto-col">
+          <div class="pacto-sub">✨ Lo que recibes</div>
+          <ul>
+            <li>Acceso completo al plan de 7 días, personalizado para tu perfil.</li>
+            <li>Acceso al círculo privado de Pioneros 5D.</li>
+            <li>Precio preferencial de por vida en la versión definitiva.</li>
+            <li>Tu voz en el producto: eres co-creador.</li>
+          </ul>
+        </div>
+        <div class="pacto-col">
+          <div class="pacto-sub">🌱 Lo que te pedimos</div>
+          <ul>
+            <li>Vivir el plan con honestidad y constancia.</li>
+            <li>Responder 2 encuestas breves (menos de 5 min cada una).</li>
+            <li>Una entrevista corta de 20 minutos la semana siguiente.</li>
+            <li>Compartir tu feedback espontáneo en el grupo.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="pacto-cierre">Un intercambio justo entre quien construye y quien se atreve a ir primero.</p>
+      <button class="cta" id="pactoAceptar">Acepto y quiero ser Pionero</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Configuración del checkout ──────────────────────────────
+  // URL base del checkout de Hotmart del Módulo PRO.
+  // ⚠️ Carlos: reemplaza con tu link real de Hotmart (Links de divulgación).
+  var HOTMART_CHECKOUT = "https://pay.hotmart.com/W105958432I";
+  // Cupón que se aplica automáticamente (los 20 de Fundador).
+  var CUPON = "SIMULACION";
+
+  (function(){
+    // Tomar el email que viene del diagnóstico (?email=...) para precargar el checkout
+    var params = new URLSearchParams(window.location.search);
+    var email = params.get("email") || "";
+    var url = HOTMART_CHECKOUT;
+    var sep = url.indexOf("?") >= 0 ? "&" : "?";
+    var q = [];
+    if (CUPON) q.push("offDiscount=" + encodeURIComponent(CUPON));
+    if (email) q.push("email=" + encodeURIComponent(email));
+    if (q.length) url += sep + q.join("&");
+    var cta = document.getElementById("ctaCheckout");
+    cta.setAttribute("href", url);
+
+    // ── Casilla obligatoria del Pacto + modal ──────────────────
+    var check = document.getElementById("aceptaPacto");
+    var overlay = document.getElementById("pactoOverlay");
+
+    function sincronizarBoton(){
+      if (check.checked) { cta.classList.remove("cta-disabled"); }
+      else { cta.classList.add("cta-disabled"); }
+    }
+    sincronizarBoton();
+    check.addEventListener("change", sincronizarBoton);
+
+    // El botón solo funciona si el pacto está aceptado
+    cta.addEventListener("click", function(e){
+      if (!check.checked) {
+        e.preventDefault();
+        // resaltar la casilla para guiar al usuario
+        var lbl = document.querySelector(".pacto-check");
+        if (lbl) { lbl.classList.add("pacto-resaltar"); setTimeout(function(){ lbl.classList.remove("pacto-resaltar"); }, 1400); }
+      }
+    });
+
+    // Abrir/cerrar modal del Pacto
+    document.getElementById("verPacto").addEventListener("click", function(e){ e.preventDefault(); overlay.classList.add("abierto"); });
+    document.getElementById("pactoCerrar").addEventListener("click", function(){ overlay.classList.remove("abierto"); });
+    overlay.addEventListener("click", function(e){ if (e.target === overlay) overlay.classList.remove("abierto"); });
+    // "Acepto" dentro del modal: marca la casilla y cierra
+    document.getElementById("pactoAceptar").addEventListener("click", function(){
+      check.checked = true;
+      sincronizarBoton();
+      overlay.classList.remove("abierto");
+    });
+  })();
+</script>
+</body></html>
+

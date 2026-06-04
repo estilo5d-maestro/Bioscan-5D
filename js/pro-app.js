@@ -11,6 +11,25 @@ function bioscanPro() {
   const EP_PROGRESO = CFG.ENDPOINT_PROGRESO || "/api/progreso";
   const URL_UMBRAL = CFG.URL_UMBRAL || "https://www.5d.com.co/umbral-5d-01/";
   const LS_KEY = "bioscan_pro_v1";
+
+  /* ============================================================
+     APERTURA DEL DÍA 1 (lanzamiento por cohorte)
+     El plan se compra desde el 4-jun, pero el Día 1 se ABRE para
+     todos los pioneros el 10-jun a las 5:00 a.m. (hora Colombia).
+     Antes de esa fecha: la persona entra, ve su huella y el mapa
+     de 7 días (bloqueados), con un mensaje elegante de cuenta regresiva.
+     ------------------------------------------------------------
+     Para CAMBIAR la fecha de apertura: edita FECHA_APERTURA_DIA1.
+     Para que TÚ (Carlos) pruebes sin esperar: agrega ?preview=1
+     a la URL de /activar (te abre los días ignorando la fecha).
+     ============================================================ */
+  const FECHA_APERTURA_DIA1 = new Date("2026-06-10T05:00:00-05:00");
+  const ES_PREVIEW = new URLSearchParams(window.location.search).get("preview") === "1";
+  function dia1Abierto() {
+    if (ES_PREVIEW) return true;            // acceso anticipado para Carlos
+    return new Date() >= FECHA_APERTURA_DIA1;
+  }
+
   const NOMBRES = { MAGNETICO:"EL MAGNÉTICO", EJE:"EL EJE", PUENTE:"EL PUENTE", INALTERABLE:"EL INALTERABLE",
                     SOSTENEDOR:"EL SOSTENEDOR", CENTINELA:"EL CENTINELA", NOMADA:"EL NÓMADA", HABITADO:"EL HABITADO" };
 
@@ -32,8 +51,13 @@ function bioscanPro() {
     async init() {
       const params = new URLSearchParams(window.location.search);
       const e = params.get("email"); if (e) this.formEmail = decodeURIComponent(e);
+      const c = params.get("codigo"); if (c) this.formCodigo = decodeURIComponent(c).toUpperCase();
       const g = this.leerSesion();
+      // 1) Si ya hay sesión guardada (entró antes), activar con ella.
       if (g && g.email && g.codigo) { this.formEmail = g.email; this.formCodigo = g.codigo; await this.activar(true); }
+      // 2) Si viene email+código por la URL (desde gracias o correo), activar de UN CLIC.
+      else if (e && c) { await this.activar(true); }
+      // 3) Si no, mostrar la pantalla de activación (con lo que se haya podido precargar).
       else this.estado = "activacion";
     },
 
@@ -56,7 +80,8 @@ function bioscanPro() {
         const res = await this._post(EP_ACTIVAR, { email, codigo, dispositivo: navigator.userAgent });
         this.cargando = false;
         if (!res || !res.ok) {
-          if (res && res.reason === "antes-de-fecha") { this.estado = "bloqueoFecha"; this.guardarSesion(email,codigo); return; }
+          // Ya NO bloqueamos por fecha del Umbral. La apertura del Día 1 (10-jun)
+          // se controla dentro del dashboard. La activación siempre lleva a "home".
           if (res && res.reason === "expirado") { this.estado = "expirado"; return; }
           if (silencioso) { this.borrarSesion(); this.estado = "activacion"; return; }
           this.error = (res && res.reason === "no-coincide") ? this.UI.activar.errorNoCoincide : this.UI.activar.errorGenerico;
@@ -125,6 +150,8 @@ function bioscanPro() {
     /* El siguiente día se habilita SOLO en una jornada posterior a la del último completado.
        Si completaste el Día 1 hoy, el Día 2 aparece mañana a las 5:00am. */
     get diaDisponible(){
+      // Compuerta de apertura por cohorte: nada se abre antes del 10-jun 5am.
+      if(!dia1Abierto()) return 0;          // 0 = ningún día disponible aún
       const u=this.ultimoCompletado;
       if(u>=7) return 7;                 // plan terminado
       if(u===0) return 1;                // nadie ha completado nada: Día 1 disponible
@@ -133,6 +160,17 @@ function bioscanPro() {
       const jHoy=this.jornada5am(new Date());
       const jUlt=this.jornada5am(fc);
       return jHoy>jUlt ? Math.min(u+1,7) : u; // nueva jornada -> libera el siguiente
+    },
+    /* ¿Aún no llega la fecha de apertura del Día 1? (para el mensaje de cuenta regresiva) */
+    get esperandoApertura(){ return !dia1Abierto(); },
+    get fechaAperturaTexto(){
+      // "miércoles 10 de junio a las 5:00 a.m."
+      try {
+        const f = FECHA_APERTURA_DIA1;
+        const dias = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+        const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+        return `${dias[f.getDay()]} ${f.getDate()} de ${meses[f.getMonth()]} a las 5:00 a.m.`;
+      } catch(e){ return "el 10 de junio a las 5:00 a.m."; }
     },
     /* ¿El próximo día está esperando a una jornada futura? (para el mensaje "vuelve mañana") */
     get esperandoProximaJornada(){
@@ -194,6 +232,8 @@ function bioscanPro() {
     pasos: ["concepto","tiny","core","reto","journal","celebracion"],
     abrirDia(n){
       const e=this.estadoDia(n);
+      // En pre-apertura (cohorte), un toque muestra el recordatorio elegante.
+      if(this.esperandoApertura){ this.avisoApertura=true; return; }
       if(e==="bloqueado" || e==="espera") return;
       this.diaActivo=n; this.pasoDia="concepto";
       const y=this.progreso.find(p=>p.dia_numero===n);
@@ -203,6 +243,8 @@ function bioscanPro() {
       this.journalResp=(y&&y.journal)?y.journal.slice(0,3).concat(["","",""]).slice(0,3):["","",""];
       this.resetTimer(); this.estado="dia"; window.scrollTo(0,0);
     },
+    avisoApertura: false,
+    cerrarAvisoApertura(){ this.avisoApertura=false; },
     get diaActual(){ return this.diaData(this.diaActivo); },
     avanzarPaso(){ const i=this.pasos.indexOf(this.pasoDia); if(i<this.pasos.length-1){this.pasoDia=this.pasos[i+1];window.scrollTo(0,0);} },
     get journalRespondido(){ return this.journalResp.filter(r=>(r||"").trim().length>2).length; },
@@ -255,9 +297,19 @@ function bioscanPro() {
       });
     },
 
-    descargarInstructivo(){ if(window.ProPDF) window.ProPDF.generar({ nombre:this.sesion.nombre, origen:this.origen, destino:this.destino, esMaestria:this.sesion.esMaestria }); },
+    descargarInstructivo(){
+      // Enlaza al PDF hermoso correcto (los 32 caminos en /guias-pro/), consistente con la página de gracias
+      var o = (this.origen || "").toLowerCase();
+      var d = (this.destino || "").toLowerCase();
+      if(!o || !d){ return; }
+      var url = "/guias-pro/guia-" + o + "-" + d + ".pdf";
+      window.open(url, "_blank");
+    },
     irAlUmbral(){ window.open(URL_UMBRAL, "_blank"); }
   };
 }
 window.bioscanPro = bioscanPro;
+
+
+
 

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#060606">
+<title>¡Bienvenido, Pionero! · BioScan 5D PRO</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{ --bg:#060606; --soft:#C2C2C8; --dim:#84848C; --gold:#C9A227; --gold-l:#E8C75A; --or:#D13F26; --or-l:#EF5036; --line:rgba(255,255,255,0.10); --serif:'Fraunces',serif; }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{ font-family:'Inter',sans-serif; background:radial-gradient(ellipse at 50% -5%, #1a120f 0%, #060606 55%); color:#F4F4F6; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:30px 20px; }
+.card{ max-width:440px; width:100%; text-align:center; }
+.kick{ font-size:11px; font-weight:800; letter-spacing:3px; color:var(--or-l); text-transform:uppercase; }
+
+/* aro de éxito */
+.orb-exito{ width:120px; height:120px; margin:0 auto 24px; position:relative; }
+.orb-exito .core{ position:absolute; inset:34px; border-radius:50%; background:radial-gradient(circle at 40% 35%, var(--or-l), var(--or)); box-shadow:0 0 44px rgba(239,80,54,0.7); display:flex; align-items:center; justify-content:center; }
+.orb-exito .check{ color:#fff; font-size:32px; font-weight:700; }
+.orb-exito svg{ position:absolute; inset:0; }
+
+h1{ font-family:var(--serif); font-size:32px; font-weight:600; line-height:1.1; margin:8px 0 12px; }
+h1 .em{ font-style:italic; color:var(--gold-l); }
+.intro{ font-size:15px; color:var(--soft); line-height:1.6; margin-bottom:6px; }
+.viaje-tag{ font-family:var(--serif); font-size:18px; font-weight:600; margin:18px 0; background:linear-gradient(100deg,#fff,var(--gold-l),var(--or-l)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; min-height:24px; }
+
+.codigo-box{ margin:22px 0; padding:18px; border:1px dashed rgba(201,162,39,0.4); border-radius:14px; background:rgba(201,162,39,0.05); }
+.codigo-box .lbl{ font-size:10px; letter-spacing:2px; color:var(--dim); text-transform:uppercase; }
+.codigo-box .cod{ font-family:'Inter',monospace; font-size:20px; font-weight:700; letter-spacing:1px; color:var(--gold-l); margin-top:6px; }
+
+.cta{ display:block; width:100%; text-align:center; padding:19px; margin-top:14px; border:none; border-radius:16px; background:linear-gradient(135deg, var(--or-l), var(--or)); color:#fff; font-size:16px; font-weight:700; letter-spacing:.4px; cursor:pointer; box-shadow:0 14px 38px rgba(239,80,54,0.42); font-family:inherit; text-decoration:none; transition:transform .15s; }
+.cta:active{ transform:scale(.98); }
+.cta-sec{ display:block; width:100%; text-align:center; padding:15px; margin-top:11px; border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,0.03); color:var(--soft); font-size:14px; font-weight:500; cursor:pointer; font-family:inherit; text-decoration:none; transition:all .2s; }
+.cta-sec:hover{ border-color:rgba(239,80,54,0.4); color:#fff; }
+.respaldo{ font-size:12.5px; color:var(--dim); line-height:1.5; margin-top:22px; }
+.respaldo b{ color:var(--soft); }
+.cargando{ font-size:13px; color:var(--dim); margin:14px 0; }
+.spinner{ display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.2); border-top-color:var(--or-l); border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; }
+@keyframes spin{ to{transform:rotate(360deg);} }
+</style></head>
+<body>
+<div class="card">
+  <div class="orb-exito">
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3"/>
+      <circle cx="60" cy="60" r="50" fill="none" stroke="#EF5036" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="0" transform="rotate(-90 60 60)" style="filter:drop-shadow(0 0 6px rgba(239,80,54,0.6))"/>
+    </svg>
+    <div class="core"><span class="check">✓</span></div>
+  </div>
+
+  <span class="kick">Bienvenido, Pionero 5D</span>
+  <h1 class="serif">Tu transformación<br><span class="em">comienza ahora</span></h1>
+  <p class="intro" id="saludo">Tu acceso al Módulo PRO está activo.</p>
+
+  <div class="viaje-tag" id="viajeTag"></div>
+
+  <!-- código (se rellena por JS) -->
+  <div class="codigo-box" id="codigoBox" style="display:none;">
+    <div class="lbl">Tu código de activación</div>
+    <div class="cod" id="codigoTxt">—</div>
+  </div>
+
+  <div class="cargando" id="cargando"><span class="spinner"></span> Preparando tu acceso...</div>
+
+  <!-- botones (se activan por JS) -->
+  <a class="cta" id="btnActivar" style="display:none;">ACTIVAR MI PLAN AHORA →</a>
+  <a class="cta-sec" id="btnPDF" style="display:none;" target="_blank">📄 Descargar mi guía en PDF</a>
+
+  <p class="respaldo">
+    <b>También te enviamos todo a tu correo</b><br>
+    (tu código y tu guía), por si quieres volver más tarde.
+  </p>
+</div>
+
+<script>
+  // ── Config ──────────────────────────────────────────────
+  var ENDPOINT_OBTENER = "/api/obtener-codigo";
+  var URL_ACTIVAR = "/activar";
+  var BASE_PDF = "/guias-pro/";   // carpeta donde subiste los 16 PDF
+
+  (function(){
+    var params = new URLSearchParams(window.location.search);
+    // Del correo viene ?email=... ; de Hotmart viene ?transaction=...
+    var email = params.get("email") || params.get("buyer_email") || params.get("e") || "";
+    var transaction = params.get("transaction") || params.get("trans") || "";
+    var saludo = document.getElementById("saludo");
+    var cargando = document.getElementById("cargando");
+
+    if (!email && !transaction) {
+      // Sin ningún identificador: igual dejamos entrar a /activar manual
+      cargando.style.display = "none";
+      document.getElementById("btnActivar").style.display = "block";
+      document.getElementById("btnActivar").setAttribute("href", URL_ACTIVAR);
+      return;
+    }
+
+    function intentar(reintento){
+      fetch(ENDPOINT_OBTENER, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ email: email, transaction: transaction })
+      }).then(function(r){ return r.json(); }).then(function(data){
+        if (data && data.ok && data.encontrado) {
+          mostrarTodo(data);
+        } else if (reintento < 3) {
+          // El webhook puede tardar unos segundos en generar el código
+          setTimeout(function(){ intentar(reintento+1); }, 2500);
+        } else {
+          // No se encontró aún: dejar entrar a /activar manual
+          cargando.style.display = "none";
+          var b = document.getElementById("btnActivar");
+          b.style.display = "block";
+          b.setAttribute("href", email ? (URL_ACTIVAR + "?email=" + encodeURIComponent(email)) : URL_ACTIVAR);
+        }
+      }).catch(function(){
+        cargando.style.display = "none";
+        var b = document.getElementById("btnActivar");
+        b.style.display = "block";
+        b.setAttribute("href", email ? (URL_ACTIVAR + "?email=" + encodeURIComponent(email)) : URL_ACTIVAR);
+      });
+    }
+
+    function mostrarTodo(d){
+      cargando.style.display = "none";
+      // el email puede venir del backend (si entramos por transaction)
+      var emailFinal = d.email || email;
+      // saludo con nombre
+      if (d.nombre) saludo.textContent = "Hola " + d.nombre.split(" ")[0] + ", tu acceso al Módulo PRO está activo.";
+      // viaje
+      var NOMBRES = { MAGNETICO:"EL MAGNÉTICO", EJE:"EL EJE", PUENTE:"EL PUENTE", INALTERABLE:"EL INALTERABLE", SOSTENEDOR:"EL SOSTENEDOR", CENTINELA:"EL CENTINELA", NOMADA:"EL NÓMADA", HABITADO:"EL HABITADO" };
+      if (d.perfil_actual && d.perfil_destino) {
+        document.getElementById("viajeTag").textContent = NOMBRES[d.perfil_actual] + "  →  " + NOMBRES[d.perfil_destino];
+      }
+      // código visible
+      if (d.codigo) {
+        document.getElementById("codigoTxt").textContent = d.codigo;
+        document.getElementById("codigoBox").style.display = "block";
+      }
+      // botón activar con email + código precargados (un clic, sin escribir)
+      var b = document.getElementById("btnActivar");
+      var url = URL_ACTIVAR + "?email=" + encodeURIComponent(emailFinal);
+      if (d.codigo) url += "&codigo=" + encodeURIComponent(d.codigo);
+      b.setAttribute("href", url);
+      b.style.display = "block";
+      // botón PDF del camino correcto
+      if (d.perfil_actual && d.perfil_destino) {
+        var pdf = BASE_PDF + "guia-" + d.perfil_actual.toLowerCase() + "-" + d.perfil_destino.toLowerCase() + ".pdf";
+        var p = document.getElementById("btnPDF");
+        p.setAttribute("href", pdf);
+        p.style.display = "block";
+      }
+    }
+
+    intentar(0);
+  })();
+</script>
+</body></html>
+
+
