@@ -15,7 +15,7 @@
    ============================================================ */
 (function () {
   // ⚙️ El 4 de junio: cambiar a true para encender el modo PRO para todos.
-  const MODO_PRO_SIEMPRE = false;
+  const MODO_PRO_SIEMPRE = true;
 
   // URL de la página de venta
   const URL_VENTA_PRO = "/transformacion-pro";
